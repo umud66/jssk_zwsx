@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO基础信息 -->
+    <title>江苏省2026年度考试录用公务员职位筛选系统 - 在线筛选查询工具</title>
+    <meta name="description" content="江苏省2026年度考试录用公务员职位筛选系统，支持按城市、学历、专业、性别等条件快速筛选职位。提供详细的职位信息查询，包括职位名称、单位名称、地区分布、学历要求等。">
+    <meta name="keywords" content="江苏公务员,2026公务员,公务员职位筛选,职位查询,公务员考试,职位表,职位信息,江苏省公务员,公务员招聘">
+    <meta name="author" content="江苏省公务员局">
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow">
+    <link rel="canonical" href="https://yourdomain.com/index.html">
+    
+    <!-- Open Graph标签（社交媒体分享） -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="江苏省2026年度考试录用公务员职位筛选系统">
+    <meta property="og:description" content="江苏省2026年度考试录用公务员职位筛选系统，支持多条件筛选查询职位信息。">
+    <meta property="og:url" content="https://yourdomain.com/index.html">
+    <meta property="og:site_name" content="江苏省公务员职位筛选系统">
+    <meta property="og:locale" content="zh_CN">
+    <meta property="og:image" content="https://yourdomain.com/og-image.jpg">
+    
+    <!-- Twitter Card标签 -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="江苏省2026年度考试录用公务员职位筛选系统">
+    <meta name="twitter:description" content="江苏省2026年度考试录用公务员职位筛选系统，支持多条件筛选查询职位信息。">
+    <meta name="twitter:image" content="https://yourdomain.com/og-image.jpg">
+    
+    <!-- 移动端优化 -->
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="公务员职位筛选">
+    
+    <!-- 结构化数据（JSON-LD） -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "江苏省2026年度考试录用公务员职位筛选系统",
+        "description": "江苏省2026年度考试录用公务员职位筛选系统，支持按城市、学历、专业、性别等条件快速筛选职位信息",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "5",
+            "ratingCount": "1"
+        }
+    }
+    </script>
+    
+    <!-- 预加载优化 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header .stats {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .filters {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+            font-size: 0.95em;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-box {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .results {
+            padding: 30px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .results-count {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .results-count .highlight {
+            color: #667eea;
+            font-size: 1.5em;
+        }
+
+        .job-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .job-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .job-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 5px;
+        }
+
+        .job-city {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .job-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #6c757d;
+            min-width: 100px;
+            margin-right: 10px;
+        }
+
+        .info-value {
+            color: #212529;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .job-description {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .job-description .info-label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 5px;
+        }
+
+        .badge-primary {
+            background: #e7f3ff;
+            color: #0066cc;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .no-results svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .highlight-text {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-box {
+                grid-template-columns: 1fr;
+            }
+
+            .job-info {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 语义化HTML结构 -->
+    <div class="container">
+        <header class="header" role="banner">
+            <h1>江苏省2026年度考试录用公务员职位筛选系统</h1>
+            <div class="stats" id="totalStats" aria-live="polite">正在加载数据...</div>
+        </header>
+
+        <nav class="filters" role="navigation" aria-label="筛选条件">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label for="cityFilter">城市筛选</label>
+                    <select id="cityFilter">
+                        <option value="">全部城市</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="educationFilter">学历要求</label>
+                    <select id="educationFilter">
+                        <option value="">全部学历</option>
+                        <option value="本科及以上">本科及以上</option>
+                        <option value="研究生">研究生</option>
+                        <option value="硕士研究生及以上">硕士研究生及以上</option>
+                        <option value="博士研究生">博士研究生</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="examTypeFilter">考试类别</label>
+                    <select id="examTypeFilter">
+                        <option value="">全部类别</option>
+                        <option value="A">A类</option>
+                        <option value="B">B类</option>
+                        <option value="C">C类</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="recruitNumFilter">招考人数</label>
+                    <select id="recruitNumFilter">
+                        <option value="">全部</option>
+                        <option value="1">1人</option>
+                        <option value="2">2人</option>
+                        <option value="3">3人及以上</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="genderFilter">性别要求</label>
+                    <select id="genderFilter">
+                        <option value="">不限性别</option>
+                        <option value="male">男性（仅限男性 + 无要求）</option>
+                        <option value="female">女性（仅限女性 + 无要求）</option>
+                        <option value="no_requirement">无性别要求</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="newGraduateFilter">应届要求</label>
+                    <select id="newGraduateFilter">
+                        <option value="">全部</option>
+                        <option value="yes">仅应届</option>
+                        <option value="no">仅非应届</option>
+                    </select>
+                </div>
+
+                <div class="search-box">
+                    <div class="filter-group">
+                        <label for="unitSearch">单位名称搜索</label>
+                        <input type="text" id="unitSearch" placeholder="输入关键词，多个用逗号或空格分隔...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="positionSearch">职位名称搜索</label>
+                        <input type="text" id="positionSearch" placeholder="输入关键词，多个用逗号或空格分隔...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="majorSearch">所学专业搜索</label>
+                        <input type="text" id="majorSearch" placeholder="输入关键词，多个用逗号或空格分隔（如：法律,计算机,经济）">
+                    </div>
+                    <div class="filter-group">
+                        <label for="includeKeywords">包含关键词（模糊搜索）</label>
+                        <input type="text" id="includeKeywords" placeholder="输入必须包含的关键词，多个用逗号或空格分隔">
+                    </div>
+                    <div class="filter-group">
+                        <label for="excludeKeywords">排除关键词</label>
+                        <input type="text" id="excludeKeywords" placeholder="输入要排除的关键词，多个用逗号或空格分隔">
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <button class="btn btn-primary" onclick="applyFilters()">筛选职位</button>
+                <button class="btn btn-secondary" onclick="resetFilters()">重置筛选</button>
+                <button class="btn btn-secondary" onclick="saveSearchHistory()" style="margin-left: 10px;">保存搜索条件</button>
+                <button class="btn btn-secondary" onclick="showSearchHistory()" style="margin-left: 10px;">查看历史</button>
+                <button class="btn btn-secondary" onclick="showFavorites()" style="margin-left: 10px;">查看收藏</button>
+            </div>
+            
+            <div id="searchHistoryPanel" style="display: none; margin-top: 20px; padding: 20px; background: #fff; border-radius: 8px; border: 1px solid #e9ecef;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0; color: #495057;">搜索历史</h3>
+                    <button class="btn btn-secondary" onclick="hideSearchHistory()" style="padding: 6px 15px; font-size: 0.9em;">关闭</button>
+                </div>
+                <div id="searchHistoryList"></div>
+            </div>
+            
+            <div id="favoritesPanel" style="display: none; margin-top: 20px; padding: 20px; background: #fff; border-radius: 8px; border: 1px solid #e9ecef;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0; color: #495057;">我的收藏</h3>
+                    <button class="btn btn-secondary" onclick="hideFavorites()" style="padding: 6px 15px; font-size: 0.9em;">关闭</button>
+                </div>
+                <div id="favoritesList"></div>
+            </div>
+        </nav>
+
+        <main class="results" role="main" aria-label="职位搜索结果">
+            <header class="results-header">
+                <h2 class="results-count" aria-live="polite">
+                    找到 <span class="highlight" id="resultCount">0</span> 个职位
+                </h2>
+            </header>
+            <section id="resultsContainer" aria-label="职位列表">
+                <div class="loading" role="status" aria-live="polite">正在加载数据...</div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let allJobs = [];
+        let filteredJobs = [];
+
+        // 加载JSON数据
+        async function loadData() {
+            try {
+                console.log('开始加载 data.json...');
+                const response = await fetch('data.json');
+                console.log('fetch响应状态:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('数据加载成功，共', data.total, '个职位');
+                
+                allJobs = data.data;
+                filteredJobs = [...allJobs];
+
+                // 更新总数统计
+                document.getElementById('totalStats').textContent = 
+                    `共 ${data.total} 个职位，涵盖 ${data.cities.length} 个城市`;
+
+                // 填充城市下拉框
+                const citySelect = document.getElementById('cityFilter');
+                data.cities.sort().forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+
+                // 初始显示所有结果
+                displayResults(filteredJobs);
+                
+                // 初始SEO信息
+                updatePageTitle(data.total);
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                let errorMessage = '数据加载失败: ';
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMessage += '无法获取数据。请确保使用HTTP服务器运行（不能直接用file://打开）。';
+                } else if (error.message.includes('HTTP错误: 404')) {
+                    errorMessage += 'data.json 文件不存在，请检查文件路径。';
+                } else {
+                    errorMessage += error.message;
+                }
+                document.getElementById('resultsContainer').innerHTML = 
+                    `<div class="no-results"><h2>数据加载失败</h2><p>${errorMessage}</p><p style="margin-top: 10px; font-size: 0.9em; color: #6c757d;">提示：请使用HTTP服务器运行此页面（如：python3 -m http.server 8000）</p></div>`;
+            }
+        }
+
+        // 拆分搜索关键词
+        function splitSearchKeywords(searchText) {
+            if (!searchText || typeof searchText !== 'string') return [];
+            
+            const trimmed = searchText.trim();
+            if (!trimmed) return [];
+            
+            // 支持逗号、分号、多个空格作为分隔符
+            // 先按逗号和分号分割，然后按空格分割
+            let keywords = [];
+            
+            // 按逗号和分号分割
+            const parts = trimmed.split(/[,，;；]+/);
+            
+            // 对每个部分，再按空格分割
+            parts.forEach(part => {
+                const words = part.split(/\s+/).filter(w => w.trim());
+                keywords = keywords.concat(words);
+            });
+            
+            // 去重、去空、转小写
+            return [...new Set(keywords)]
+                .map(keyword => keyword.trim().toLowerCase())
+                .filter(keyword => keyword.length > 0);
+        }
+
+        // 检查是否匹配多个关键词（任一匹配即可）
+        function matchesAnyKeyword(text, keywords) {
+            if (keywords.length === 0) return true;
+            if (!text) return false;
+            
+            const lowerText = String(text).toLowerCase();
+            return keywords.some(keyword => lowerText.includes(keyword));
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            const city = document.getElementById('cityFilter').value;
+            const education = document.getElementById('educationFilter').value;
+            const examType = document.getElementById('examTypeFilter').value;
+            const recruitNum = document.getElementById('recruitNumFilter').value;
+            const gender = document.getElementById('genderFilter').value;
+            const newGraduate = document.getElementById('newGraduateFilter').value;
+            const unitSearch = document.getElementById('unitSearch').value.trim();
+            const positionSearch = document.getElementById('positionSearch').value.trim();
+            const majorSearch = document.getElementById('majorSearch').value.trim();
+            const includeKeywords = document.getElementById('includeKeywords').value.trim();
+            const excludeKeywords = document.getElementById('excludeKeywords').value.trim();
+
+            // 拆分关键词
+            const unitKeywords = splitSearchKeywords(unitSearch);
+            const positionKeywords = splitSearchKeywords(positionSearch);
+            const majorKeywords = splitSearchKeywords(majorSearch);
+            const includeKeywordList = splitSearchKeywords(includeKeywords);
+            const excludeKeywordList = splitSearchKeywords(excludeKeywords);
+            
+            // 调试日志（可在浏览器控制台查看）
+            if (majorKeywords.length > 0 || unitKeywords.length > 0 || positionKeywords.length > 0 || includeKeywordList.length > 0 || excludeKeywordList.length > 0) {
+                console.log('拆分的关键词:', {
+                    unit: unitKeywords,
+                    position: positionKeywords,
+                    major: majorKeywords,
+                    include: includeKeywordList,
+                    exclude: excludeKeywordList
+                });
+            }
+
+            filteredJobs = allJobs.filter(job => {
+                // 城市筛选
+                if (city && job.c !== city) return false;
+
+                // 学历筛选
+                if (education && !job.ed.includes(education)) return false;
+
+                // 考试类别筛选
+                if (examType && job.et !== examType) return false;
+
+                // 招考人数筛选
+                if (recruitNum) {
+                    const num = parseInt(job.rh) || 0;
+                    if (recruitNum === '1' && num !== 1) return false;
+                    if (recruitNum === '2' && num !== 2) return false;
+                    if (recruitNum === '3' && num < 3) return false;
+                }
+
+                // 性别筛选
+                if (gender) {
+                    const otherInfo = (job.ot || '').toLowerCase();
+                    const hasMale = otherInfo.includes('男性');
+                    const hasFemale = otherInfo.includes('女性');
+                    
+                    if (gender === 'male') {
+                        // 男性（仅限男性 + 无要求）：显示仅限男性的职位或无性别要求的职位
+                        // 排除：仅限女性的职位
+                        if (hasFemale && !hasMale) return false;
+                        // 其他情况（无要求、仅限男性）都通过
+                    } else if (gender === 'female') {
+                        // 女性（仅限女性 + 无要求）：显示仅限女性的职位或无性别要求的职位
+                        // 排除：仅限男性的职位
+                        if (hasMale && !hasFemale) return false;
+                        // 其他情况（无要求、仅限女性）都通过
+                    } else if (gender === 'no_requirement') {
+                        // 无性别要求：不包含"男性"和"女性"
+                        if (hasMale || hasFemale) return false;
+                    }
+                }
+
+                // 应届筛选
+                if (newGraduate) {
+                    const description = (job.pd || '').toLowerCase();
+                    const otherInfo = (job.ot || '').toLowerCase();
+                    const hasNewGraduate = description.includes('应届毕业生') || otherInfo.includes('应届毕业生');
+                    
+                    if (newGraduate === 'yes') {
+                        // 仅应届：必须包含"应届毕业生"
+                        if (!hasNewGraduate) return false;
+                    } else if (newGraduate === 'no') {
+                        // 仅非应届：不包含"应届毕业生"
+                        if (hasNewGraduate) return false;
+                    }
+                }
+
+                // 单位名称搜索（支持多关键词）
+                if (unitKeywords.length > 0 && !matchesAnyKeyword(job.un || '', unitKeywords)) return false;
+
+                // 职位名称搜索（支持多关键词）
+                if (positionKeywords.length > 0 && !matchesAnyKeyword(job.pn || '', positionKeywords)) return false;
+
+                // 所学专业搜索（支持多关键词）
+                if (majorKeywords.length > 0) {
+                    const majorField = job.mj || '';
+                    if (!matchesAnyKeyword(majorField, majorKeywords)) return false;
+                }
+
+                // 包含关键词（模糊搜索 - 所有关键词必须在任意字段中出现）
+                if (includeKeywordList.length > 0) {
+                    // 合并所有文本字段进行搜索
+                    const allTextFields = [
+                        job.c || '',
+                        job.un || '',
+                        job.pn || '',
+                        job.pd || '',
+                        job.mj || '',
+                        job.ed || '',
+                        job.ot || '',
+                        job.rn || ''
+                    ].join(' ').toLowerCase();
+                    
+                    // 必须包含所有关键词（AND逻辑：所有关键词都要出现）
+                    const allKeywordsFound = includeKeywordList.every(keyword => allTextFields.includes(keyword));
+                    if (!allKeywordsFound) {
+                        return false;
+                    }
+                }
+
+                // 排除关键词（任意字段包含即排除）
+                if (excludeKeywordList.length > 0) {
+                    // 检查所有文本字段是否包含排除关键词
+                    const allTextFields = [
+                        job.c || '',
+                        job.un || '',
+                        job.pn || '',
+                        job.pd || '',
+                        job.mj || '',
+                        job.ed || '',
+                        job.ot || '',
+                        job.rn || ''
+                    ].join(' ').toLowerCase();
+                    
+                    // 如果任意一个排除关键词出现在任何字段中，则排除这条记录
+                    if (excludeKeywordList.some(keyword => allTextFields.includes(keyword))) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            displayResults(filteredJobs);
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('cityFilter').value = '';
+            document.getElementById('educationFilter').value = '';
+            document.getElementById('examTypeFilter').value = '';
+            document.getElementById('recruitNumFilter').value = '';
+            document.getElementById('genderFilter').value = '';
+            document.getElementById('newGraduateFilter').value = '';
+            document.getElementById('unitSearch').value = '';
+            document.getElementById('positionSearch').value = '';
+            document.getElementById('majorSearch').value = '';
+            document.getElementById('includeKeywords').value = '';
+            document.getElementById('excludeKeywords').value = '';
+            filteredJobs = [...allJobs];
+            displayResults(filteredJobs);
+        }
+
+        // 生成职位唯一ID（使用城市、地区名称、单位代码、职位代码确保唯一性）
+        function generateJobId(job) {
+            const city = job.c || '';
+            const region = job.rn || '';
+            const unitCode = job.uc || '';
+            const positionCode = job.pc || '';
+            return `${city}_${region}_${unitCode}_${positionCode}`.replace(/\s+/g, '_');
+        }
+
+        // 保存搜索历史到本地存储
+        function saveSearchHistory() {
+            try {
+                const searchConditions = {
+                    city: document.getElementById('cityFilter').value || '',
+                    education: document.getElementById('educationFilter').value || '',
+                    examType: document.getElementById('examTypeFilter').value || '',
+                    recruitNum: document.getElementById('recruitNumFilter').value || '',
+                    gender: document.getElementById('genderFilter').value || '',
+                    newGraduate: document.getElementById('newGraduateFilter').value || '',
+                    unitSearch: document.getElementById('unitSearch').value || '',
+                    positionSearch: document.getElementById('positionSearch').value || '',
+                    majorSearch: document.getElementById('majorSearch').value || '',
+                    includeKeywords: document.getElementById('includeKeywords').value || '',
+                    excludeKeywords: document.getElementById('excludeKeywords').value || '',
+                    saveTime: new Date().toLocaleString('zh-CN')
+                };
+                
+                // 获取现有历史记录
+                let history = [];
+                try {
+                    const historyStr = localStorage.getItem('searchHistory');
+                    if (historyStr) {
+                        history = JSON.parse(historyStr);
+                    }
+                } catch (e) {
+                    console.error('读取历史记录失败:', e);
+                    history = [];
+                }
+                
+                // 添加新记录到开头
+                history.unshift(searchConditions);
+                
+                // 限制最多保存20条记录
+                if (history.length > 20) {
+                    history = history.slice(0, 20);
+                }
+                
+                // 保存到本地存储
+                localStorage.setItem('searchHistory', JSON.stringify(history));
+                
+                alert('搜索条件已保存！');
+            } catch (error) {
+                console.error('保存搜索历史失败:', error);
+                alert('保存失败，请检查浏览器是否允许使用本地存储。');
+            }
+        }
+
+        // 显示搜索历史
+        function showSearchHistory() {
+            let history = [];
+            try {
+                const historyStr = localStorage.getItem('searchHistory');
+                if (historyStr) {
+                    history = JSON.parse(historyStr);
+                }
+            } catch (e) {
+                console.error('读取历史记录失败:', e);
+                history = [];
+            }
+            
+            const panel = document.getElementById('searchHistoryPanel');
+            const list = document.getElementById('searchHistoryList');
+            
+            if (history.length === 0) {
+                list.innerHTML = '<p style="color: #6c757d; text-align: center; padding: 20px;">暂无搜索历史</p>';
+            } else {
+                list.innerHTML = history.map((item, index) => {
+                    const conditions = [];
+                    if (item.city) conditions.push(`城市: ${item.city}`);
+                    if (item.education) conditions.push(`学历: ${item.education}`);
+                    if (item.examType) conditions.push(`类别: ${item.examType}`);
+                    if (item.gender) conditions.push(`性别: ${item.gender === 'male' ? '男性' : item.gender === 'female' ? '女性' : '无要求'}`);
+                    if (item.newGraduate) conditions.push(`应届: ${item.newGraduate === 'yes' ? '是' : '否'}`);
+                    if (item.unitSearch) conditions.push(`单位: ${item.unitSearch}`);
+                    if (item.positionSearch) conditions.push(`职位: ${item.positionSearch}`);
+                    if (item.majorSearch) conditions.push(`专业: ${item.majorSearch}`);
+                    if (item.includeKeywords) conditions.push(`包含: ${item.includeKeywords}`);
+                    if (item.excludeKeywords) conditions.push(`排除: ${item.excludeKeywords}`);
+                    
+                    return `
+                        <div style="padding: 15px; margin-bottom: 10px; border: 1px solid #e9ecef; border-radius: 8px; background: #f8f9fa;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; margin-bottom: 8px; color: #495057;">${item.saveTime}</div>
+                                    <div style="color: #6c757d; font-size: 0.9em;">
+                                        ${conditions.length > 0 ? conditions.join(' | ') : '无筛选条件'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary" onclick="loadSearchHistory(${index})" style="padding: 6px 15px; font-size: 0.85em; margin-right: 5px;">应用</button>
+                                    <button class="btn btn-secondary" onclick="deleteSearchHistory(${index})" style="padding: 6px 15px; font-size: 0.85em;">删除</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            panel.style.display = 'block';
+        }
+
+        // 隐藏搜索历史
+        function hideSearchHistory() {
+            document.getElementById('searchHistoryPanel').style.display = 'none';
+        }
+
+        // 加载搜索历史
+        function loadSearchHistory(index) {
+            let history = [];
+            try {
+                const historyStr = localStorage.getItem('searchHistory');
+                if (historyStr) {
+                    history = JSON.parse(historyStr);
+                }
+            } catch (e) {
+                console.error('读取历史记录失败:', e);
+                history = [];
+            }
+            
+            if (history[index]) {
+                const item = history[index];
+                document.getElementById('cityFilter').value = item.city || '';
+                document.getElementById('educationFilter').value = item.education || '';
+                document.getElementById('examTypeFilter').value = item.examType || '';
+                document.getElementById('recruitNumFilter').value = item.recruitNum || '';
+                document.getElementById('genderFilter').value = item.gender || '';
+                document.getElementById('newGraduateFilter').value = item.newGraduate || '';
+                document.getElementById('unitSearch').value = item.unitSearch || '';
+                document.getElementById('positionSearch').value = item.positionSearch || '';
+                document.getElementById('majorSearch').value = item.majorSearch || '';
+                document.getElementById('includeKeywords').value = item.includeKeywords || '';
+                document.getElementById('excludeKeywords').value = item.excludeKeywords || '';
+                
+                // 自动应用筛选
+                applyFilters();
+                hideSearchHistory();
+            }
+        }
+
+        // 删除搜索历史
+        function deleteSearchHistory(index) {
+            try {
+                let history = [];
+                const historyStr = localStorage.getItem('searchHistory');
+                if (historyStr) {
+                    history = JSON.parse(historyStr);
+                }
+                history.splice(index, 1);
+                localStorage.setItem('searchHistory', JSON.stringify(history));
+                showSearchHistory(); // 刷新显示
+            } catch (e) {
+                console.error('删除历史记录失败:', e);
+                alert('删除失败');
+            }
+        }
+
+        // 显示收藏夹
+        function showFavorites() {
+            const favorites = getFavorites();
+            const panel = document.getElementById('favoritesPanel');
+            const list = document.getElementById('favoritesList');
+            
+            if (favorites.length === 0) {
+                list.innerHTML = '<p style="color: #6c757d; text-align: center; padding: 20px;">暂无收藏的职位</p>';
+            } else {
+                list.innerHTML = favorites.map((job, index) => {
+                    const districtName = extractDistrictName(job.rn || '', job.c || '');
+                    const locationDisplay = districtName ? `${escapeHtml(job.c)} · ${escapeHtml(districtName)}` : escapeHtml(job.c);
+                    
+                    return `
+                        <div class="job-card" style="margin-bottom: 15px;">
+                            <div class="job-header">
+                                <div>
+                                    <div class="job-title">${escapeHtml(job.pn || '未指定')}</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <button class="btn" onclick="removeFromFavorites(${index})" style="background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 600;">
+                                        取消收藏
+                                    </button>
+                                    <span class="job-city">${locationDisplay}</span>
+                                </div>
+                            </div>
+                            <div class="job-info">
+                                <div class="info-item">
+                                    <span class="info-label">单位名称：</span>
+                                    <span class="info-value">${escapeHtml(job.un || '')}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">专业要求：</span>
+                                    <span class="info-value">${escapeHtml(job.mj || '不限')}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">学历要求：</span>
+                                    <span class="info-value">${escapeHtml(job.ed || '')}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">招考人数：</span>
+                                    <span class="info-value">${escapeHtml(job.rh || '')} 人</span>
+                                </div>
+                            </div>
+                            ${job.pd ? `
+                            <div class="job-description">
+                                <span class="info-label">职位简介：</span>
+                                <div class="info-value">${escapeHtml(job.pd)}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            panel.style.display = 'block';
+        }
+
+        // 隐藏收藏夹
+        function hideFavorites() {
+            document.getElementById('favoritesPanel').style.display = 'none';
+        }
+
+        // 从收藏夹删除
+        function removeFromFavorites(index) {
+            const favorites = getFavorites();
+            if (index >= 0 && index < favorites.length) {
+                favorites.splice(index, 1);
+                saveFavorites(favorites);
+                showFavorites(); // 刷新显示
+            }
+        }
+
+        // 显示结果
+        function displayResults(jobs) {
+            const container = document.getElementById('resultsContainer');
+            const countElement = document.getElementById('resultCount');
+            
+            countElement.textContent = jobs.length;
+
+            if (jobs.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results" role="status" aria-live="polite">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <h2>未找到符合条件的职位</h2>
+                        <p>请尝试调整筛选条件</p>
+                    </div>
+                `;
+                updatePageTitle(0);
+                return;
+            }
+
+            container.innerHTML = jobs.map(job => createJobCard(job)).join('');
+            
+            // 更新页面标题（SEO优化）
+            updatePageTitle(jobs.length);
+            
+            // 更新结构化数据
+            updateStructuredData(jobs);
+        }
+        
+        // 更新页面标题（SEO优化）
+        function updatePageTitle(resultCount) {
+            const baseTitle = '江苏省2026年度考试录用公务员职位筛选系统';
+            if (resultCount === 0) {
+                document.title = `${baseTitle} - 未找到匹配职位`;
+            } else {
+                document.title = `${baseTitle} - 找到 ${resultCount} 个职位`;
+            }
+        }
+        
+        // 更新结构化数据（SEO优化）
+        function updateStructuredData(jobs) {
+            // 移除旧的结构化数据
+            const oldScript = document.querySelector('script[type="application/ld+json"][data-dynamic]');
+            if (oldScript) {
+                oldScript.remove();
+            }
+            
+            // 只更新前50个职位，避免数据过大
+            const jobsToShow = jobs.slice(0, 50);
+            
+            // 创建新的结构化数据
+            const structuredData = {
+                "@context": "https://schema.org",
+                "@type": "ItemList",
+                "name": "江苏省2026年度考试录用公务员职位列表",
+                "description": `找到 ${jobs.length} 个符合条件的职位`,
+                "numberOfItems": jobs.length,
+                "itemListElement": jobsToShow.map((job, index) => ({
+                    "@type": "ListItem",
+                    "position": index + 1,
+                    "item": {
+                        "@type": "JobPosting",
+                        "title": job.pn || '未指定',
+                        "description": job.pd || `${job.un} - ${job.pn}`,
+                        "jobLocation": {
+                            "@type": "Place",
+                            "address": {
+                                "@type": "PostalAddress",
+                                "addressLocality": job.c || '',
+                                "addressRegion": "江苏省"
+                            }
+                        },
+                        "hiringOrganization": {
+                            "@type": "Organization",
+                            "name": job.un || ''
+                        }
+                    }
+                }))
+            };
+            
+            // 添加到页面
+            const script = document.createElement('script');
+            script.type = 'application/ld+json';
+            script.setAttribute('data-dynamic', 'true');
+            script.textContent = JSON.stringify(structuredData);
+            document.head.appendChild(script);
+        }
+
+        // 提取区县名称
+        function extractDistrictName(regionName, cityName) {
+            if (!regionName || !cityName) return '';
+            
+            // 移除城市名称前缀
+            let district = String(regionName).replace(String(cityName), '');
+            
+            // 如果移除后为空或是"市辖区"，说明是市级
+            if (!district || district === '市辖区' || district === cityName) {
+                return '';
+            }
+            
+            // 返回区县名称（去除多余的空格）
+            return district.trim();
+        }
+
+        // 检查职位是否已收藏
+        function isJobFavorited(job) {
+            const favorites = getFavorites();
+            const jobId = generateJobId(job);
+            return favorites.some(fav => generateJobId(fav) === jobId);
+        }
+
+        // 获取收藏列表
+        function getFavorites() {
+            try {
+                const favoritesStr = localStorage.getItem('jobFavorites');
+                if (favoritesStr) {
+                    return JSON.parse(favoritesStr);
+                }
+            } catch (e) {
+                console.error('读取收藏失败:', e);
+            }
+            return [];
+        }
+
+        // 保存收藏列表
+        function saveFavorites(favorites) {
+            try {
+                localStorage.setItem('jobFavorites', JSON.stringify(favorites));
+            } catch (e) {
+                console.error('保存收藏失败:', e);
+                alert('保存失败，请检查浏览器是否允许使用本地存储。');
+            }
+        }
+
+        // 收藏/取消收藏职位（通过职位ID）
+        function toggleFavoriteByJobId(jobIdStr) {
+            // 从过滤后的职位列表中查找
+            const job = filteredJobs.find(j => generateJobId(j) === jobIdStr);
+            if (!job) return;
+            
+            toggleFavorite(job);
+        }
+
+        // 收藏/取消收藏职位
+        function toggleFavorite(job) {
+            const favorites = getFavorites();
+            const jobId = generateJobId(job);
+            const index = favorites.findIndex(fav => generateJobId(fav) === jobId);
+            
+            if (index >= 0) {
+                // 取消收藏
+                favorites.splice(index, 1);
+                saveFavorites(favorites);
+                // 刷新显示
+                applyFilters();
+            } else {
+                // 添加收藏
+                favorites.push(job);
+                saveFavorites(favorites);
+            }
+            // 刷新显示
+            applyFilters();
+        }
+
+        // 创建职位卡片
+        function createJobCard(job) {
+            // 为每个职位生成唯一的ID
+            const jobId = generateJobId(job);
+            
+            const highlights = [];
+            if (job.rh) highlights.push(`<span class="badge badge-success" aria-label="招考人数">招考 ${job.rh} 人</span>`);
+            if (job.et) highlights.push(`<span class="badge badge-primary" aria-label="考试类别">${job.et}类</span>`);
+            if (job.ed) highlights.push(`<span class="badge badge-info" aria-label="学历要求">${job.ed}</span>`);
+            if (job.kr) highlights.push(`<span class="badge badge-warning" aria-label="开考比例">开考比例 ${job.kr}</span>`);
+
+            // 提取区县名称
+            const districtName = extractDistrictName(job.rn || '', job.c || '');
+            const locationDisplay = districtName ? `${escapeHtml(job.c)} · ${escapeHtml(districtName)}` : escapeHtml(job.c);
+            
+            // 检查是否已收藏
+            const isFavorited = isJobFavorited(job);
+            const favoriteBtnText = isFavorited ? '★ 已收藏' : '☆ 收藏';
+            const favoriteBtnStyle = isFavorited 
+                ? 'background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: #333;' 
+                : 'background: #6c757d; color: white;';
+
+            return `
+                <article class="job-card" itemscope itemtype="https://schema.org/JobPosting" id="job-${jobId}">
+                    <header class="job-header">
+                        <div>
+                            <h3 class="job-title" itemprop="title">${escapeHtml(job.pn || '未指定')}</h3>
+                            <div style="margin-top: 10px;" role="group" aria-label="职位标签">
+                                ${highlights.join('')}
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button class="btn" onclick="toggleFavoriteByJobId('${generateJobId(job).replace(/'/g, "\\'")}')" 
+                                    style="${favoriteBtnStyle} padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 600;"
+                                    aria-label="${isFavorited ? '取消收藏' : '收藏'}此职位"
+                                    aria-pressed="${isFavorited ? 'true' : 'false'}">
+                                ${favoriteBtnText}
+                            </button>
+                            <span class="job-city" itemprop="jobLocation" itemscope itemtype="https://schema.org/Place">
+                                <span itemprop="address">${locationDisplay}</span>
+                            </span>
+                        </div>
+                    </header>
+                    
+                    <div class="job-info" itemprop="description">
+                        ${districtName ? `
+                        <div class="info-item">
+                            <span class="info-label">所属区县：</span>
+                            <span class="info-value">${escapeHtml(districtName)}</span>
+                        </div>
+                        ` : ''}
+                        <div class="info-item">
+                            <span class="info-label">单位名称：</span>
+                            <span class="info-value">${escapeHtml(job.un || '')}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">单位代码：</span>
+                            <span class="info-value">${escapeHtml(job.uc || '')}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">职位代码：</span>
+                            <span class="info-value">${escapeHtml(job.pc || '')}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">地区名称：</span>
+                            <span class="info-value">${escapeHtml(job.rn || job.c || '')}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">隶属关系：</span>
+                            <span class="info-value">${escapeHtml(job.r || '')}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">专业要求：</span>
+                            <span class="info-value">${escapeHtml(job.mj || '不限')}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">其他要求：</span>
+                            <span class="info-value">${escapeHtml(job.ot || '无')}</span>
+                        </div>
+                    </div>
+
+                    ${job.pd ? `
+                    <div class="job-description">
+                        <span class="info-label">职位简介：</span>
+                        <div class="info-value" itemprop="description">${escapeHtml(job.pd)}</div>
+                    </div>
+                    ` : ''}
+                </article>
+            `;
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 回车键触发筛选
+        document.addEventListener('DOMContentLoaded', () => {
+            ['unitSearch', 'positionSearch', 'majorSearch', 'includeKeywords', 'excludeKeywords'].forEach(id => {
+                document.getElementById(id).addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        applyFilters();
+                    }
+                });
+            });
+        });
+
+        // 页面加载时加载数据
+        loadData();
+    </script>
+</body>
+</html>
+
