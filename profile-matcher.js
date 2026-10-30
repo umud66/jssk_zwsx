@@ -1,8 +1,11 @@
 (function (root, factory) {
-    const api = factory(typeof module === 'object' && module.exports ? require('./residency-rules.js') : root.ResidencyRules);
+    const api = factory(
+        typeof module === 'object' && module.exports ? require('./residency-rules.js') : root.ResidencyRules,
+        typeof module === 'object' && module.exports ? require('./major-catalog.js') : root.MajorCatalog
+    );
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.ProfileMatcher = api;
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (residencyRules) {
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (residencyRules, majorCatalog) {
     'use strict';
     const LEVELS = Object.freeze({ highschool: 1, college: 2, bachelor: 3, master: 4, doctor: 5 });
     const LABELS = Object.freeze({ highschool: '高中 / 中专', college: '大专', bachelor: '本科', master: '硕士研究生', doctor: '博士研究生' });
@@ -11,6 +14,11 @@
     const normalize = value => text(value).replace(/\s+/g, '').replace(/（/g, '(').replace(/）/g, ')').toLowerCase();
     const allowed = (value, values) => values.includes(value) ? value : '';
     const chineseNumber = value => /^\d+(\.\d+)?$/.test(value) ? Number(value) : ({ 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 }[value] ?? null);
+    function educationForYear(education, year) {
+        if (!majorCatalog.available(year)) return { ...education };
+        const entry = majorCatalog.lookup(year, education.level, education.major);
+        return { ...education, major: entry?.name || education.major, categories: entry ? entry.categories.join('，') : '' };
+    }
     function normalizeProfile(value) {
         const source = value && typeof value === 'object' ? value : {};
         const years = typeof source.workYears === 'number' || typeof source.workYears === 'string' ? String(source.workYears).trim() : '';
@@ -28,10 +36,10 @@
             credentialKeywords: text(source.credentialKeywords).slice(0, 4000),
             eligibilityKeywords: text(source.eligibilityKeywords).slice(0, 4000),
             strictCredentials: true,
-            educations: Array.isArray(source.educations) ? source.educations.filter(item => item && LEVELS[item.level] && clean(item.major)).map(item => ({
+            educations: Array.isArray(source.educations) ? source.educations.filter(item => item && LEVELS[item.level] && clean(item.major)).map(item => educationForYear({
                 level: item.level, major: clean(item.major), categories: clean(item.categories),
                 degree: allowed(item.degree, ['yes', 'no']), graduate: allowed(item.graduate, ['yes', 'no', 'regular'])
-            })) : []
+            }, Number.isInteger(source.examYear) ? source.examYear : 2026)) : []
         };
     }
     function forExamYear(value, year) {
@@ -40,6 +48,7 @@
             profile.educations = profile.educations.map(education => ({ ...education, graduate: ['yes', 'regular'].includes(education.graduate) ? '' : education.graduate }));
             profile.examYear = year;
         }
+        profile.educations = profile.educations.map(education => educationForYear(education, year));
         return profile;
     }
     function educationMatch(requirement, level) {
@@ -77,13 +86,16 @@
     function matchesEducationFilter(job, selection) {
         return !selection || educationFilterGroup(job) === educationFilterValue(selection);
     }
-    function splitMajors(text) {
+    function splitMajors(text, protectedMajor = '') {
         const parts = [];
+        const completeName = normalize(protectedMajor);
         let depth = 0, part = '';
         for (const char of normalize(text)) {
             if (char === '(') depth++;
             if (char === ')') depth = Math.max(0, depth - 1);
-            if (!depth && /[,，、;；\n]/.test(char)) { if (part) parts.push(part); part = ''; }
+            // “政治学、经济学与哲学”等目录专业本身带顿号，保留用户完整名称。
+            const insideName = char === '、' && completeName.startsWith(part + char);
+            if (!depth && /[,，、;；\n]/.test(char) && !insideName) { if (part) parts.push(part); part = ''; }
             else part += char;
         }
         if (part) parts.push(part);
@@ -103,21 +115,28 @@
         }
         return 'mismatch';
     }
-    function matchesMajorSearch(requirement, keywords) {
+    function matchesMajorSearch(requirement, keywords, context = {}) {
         if (!keywords.length) return true;
-        const parts = splitMajors(requirement);
-        return keywords.some(keyword => listedMajorMatch(parts, normalize(keyword)) !== 'mismatch');
+        const levels = majorCatalog.available(context.year) ? Object.keys(LEVELS).filter(level => educationMatch(context.educationRequirement, level) === 'match') : [];
+        return keywords.some(keyword => listedMajorMatch(splitMajors(requirement, keyword), normalize(keyword)) !== 'mismatch'
+            || levels.some(level => majorMatch(requirement, { level, major: keyword }, context.year).status === 'match'));
     }
-    function majorMatch(requirement, education) {
+    function majorMatch(requirement, education, year = 2026) {
+        education = educationForYear(education, year);
+        if (majorCatalog.isPlaceholder(year, education.major)) return { status: 'mismatch', reason: '请填写该学历的具体专业名称，不能用专业大类或概括项代替' };
         const text = normalize(requirement), major = normalize(education.major);
         if (!text) return { status: 'review', reason: '岗位未注明专业，需核对' };
         if (/^(不限|专业不限|不限专业|不限制专业)$/.test(text)) return { status: 'match', reason: '岗位不限专业' };
         if (/^(不限|专业不限|不限专业|不限制专业)\(/.test(text)) return { status: 'review', reason: '不限专业但有附加条件，请核对原文' };
-        const parts = splitMajors(text), categories = splitMajors(education.categories);
+        const parts = splitMajors(text, major), categories = splitMajors(education.categories);
         const listed = listedMajorMatch(parts, major);
         if (listed === 'match') return { status: 'match', reason: `专业名称匹配：${education.major}` };
         const category = categories.find(value => parts.includes(value));
-        if (category) return { status: 'match', reason: `按已填写专业类别匹配：${category}` };
+        if (category) return { status: 'match', reason: majorCatalog.available(year) ? `按${year}目录专业大类匹配：${category}` : `按已填写专业类别匹配：${category}` };
+        if (majorCatalog.available(year) && parts.some(value => value.endsWith('类'))) {
+            if (listed === 'review') return { status: 'review', reason: '专业有明确括号说明，请核对完整名称及附加要求' };
+            return { status: 'mismatch', reason: '该学历专业未在目录中识别到岗位要求的专业大类' };
+        }
         const possibleCategory = parts.find(value => value.endsWith('类') && (major.startsWith(value.slice(0, -1)) || (value === '法律类' && /^(法学|法律)(\(.*\))?$/.test(major))));
         if (possibleCategory) return { status: 'review', reason: `可能属于${possibleCategory}，请确认该学历的专业类别` };
         if (listed === 'review') return { status: 'review', reason: '专业有明确括号说明，请核对完整名称及附加要求' };
@@ -338,10 +357,11 @@
         const global = globalConditions(job, profile);
         if (global.status === 'mismatch') return { status: 'mismatch', matches: [], reviews: global.reviews, requirements: [] };
         const matches = [];
-        profile.educations.forEach((education, index) => {
+        profile.educations.forEach((record, index) => {
+            const education = educationForYear(record, year);
             const level = educationMatch(job.ed, education.level);
             if (level === 'mismatch') return;
-            const major = majorMatch(job.mj, education);
+            const major = majorMatch(job.mj, education, year);
             if (major.status === 'mismatch') return;
             const eligibility = eligibilityConditions(job, profile, education);
             if (eligibility.status === 'mismatch') return;
@@ -376,5 +396,5 @@
         const selected = confirmed.length ? confirmed : matches;
         return { status: confirmed.length ? 'match' : matches.length ? 'review' : 'mismatch', matches: selected, reviews: confirmed.length ? [] : [...new Set(selected.flatMap(item => item.reviews))], requirements: selected.flatMap(item => item.requirements) };
     }
-    return Object.freeze({ LEVELS, LABELS, normalizeProfile, forExamYear, educationMatch, educationFilterValue, educationFilterGroup, matchesEducationFilter, majorMatch, matchesMajorSearch, genderLimits, matchesGenderFilter, matchJob });
+    return Object.freeze({ LEVELS, LABELS, normalizeProfile, forExamYear, educationForYear, educationMatch, educationFilterValue, educationFilterGroup, matchesEducationFilter, majorMatch, matchesMajorSearch, genderLimits, matchesGenderFilter, matchJob });
 }));

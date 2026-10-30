@@ -93,6 +93,9 @@
         .education-row-title h3 { font-size: 14px; }
         .education-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
         .education-major { grid-column: span 2; }
+        .catalog-categories { display: block; min-height: 44px; padding: 10px 0; font-size: 14px; overflow-wrap: anywhere; }
+        .major-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .major-suggestions .btn { max-width: 100%; min-height: 44px; white-space: normal; overflow-wrap: anywhere; text-align: left; padding: 8px 10px; }
         .profile-actions { display: flex; flex-wrap: wrap; gap: 10px; padding: 18px 0 12px; }
         .profile-controls { display: flex; flex-wrap: wrap; column-gap: 24px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 5px; }
         .profile-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; cursor: pointer; }
@@ -235,7 +238,7 @@
                         <div class="filter-group"><label for="genderFilter">性别条件</label><select id="genderFilter"><option value="">不限</option><option value="male">男性可报</option><option value="female">女性可报</option><option value="no_requirement">未要求</option></select></div>
                         <div class="filter-group"><label for="newGraduateFilter">应届条件</label><select id="newGraduateFilter"><option value="">全部条件</option><option value="yes">要求应届</option><option value="no">未要求应届</option></select></div>
                         <div class="filter-group wide"><label for="affiliationFilter">隶属关系</label><select id="affiliationFilter"><option value="">不限</option></select></div>
-                        <div class="filter-group wide"><label for="majorSearch">所学专业</label><input type="search" id="majorSearch" placeholder="例如：法学，法律类" aria-describedby="majorHelp"><p class="field-help" id="majorHelp">填写完整专业或类别，多个用空格或逗号分隔；精确匹配任意一项。</p></div>
+                        <div class="filter-group wide"><label for="majorSearch">所学专业</label><input type="search" id="majorSearch" placeholder="例如：法学，法律类" aria-describedby="majorHelp"><p class="field-help" id="majorHelp">填写完整专业或类别，按岗位接受的学历识别目录大类；多个用空格或逗号分隔，匹配任意一项。</p></div>
                     </div>
                     <details class="advanced-filters" id="advancedFilters">
                         <summary>更多条件与关键词</summary>
@@ -277,7 +280,7 @@
                         </div>
                         <div id="educationRows"></div>
                         <button type="button" class="btn" id="addEducation">添加一条学历</button>
-                        <p class="field-help" style="margin-top:12px">专业类别可按<a id="majorReference" href="https://www.jszzb.gov.cn/2027ndkslygwyzt/zkgg/art/2026/art_96ed0e072c8b4abc8d5f485f02a58fb6.html" target="_blank" rel="noopener noreferrer">当年度专业参考目录</a>选填，多个用逗号分隔。研究生地域豁免按该条学历、对应专业和相应学位判断，不能借给本科专业；应届身份按每条学历填写。</p>
+                        <p class="field-help" style="margin-top:12px">选择学历后，输入专业关键词并从候选中选取毕业证上的完整专业名；大类按<a id="majorReference" href="https://www.jszzb.gov.cn/2027ndkslygwyzt/zkgg/art/2026/art_96ed0e072c8b4abc8d5f485f02a58fb6.html" target="_blank" rel="noopener noreferrer">当年度专业参考目录</a>自动识别。目录外专业可照实填写，按岗位列出的完整名称匹配。研究生地域豁免按该条学历、对应专业和相应学位判断，不能借给本科专业。</p>
                         <div class="profile-actions"><button type="submit" class="btn btn-primary" id="saveProfile" disabled>保存并初筛</button><button type="button" class="btn" id="cancelProfile">取消编辑</button></div>
                     </form>
                 </details>
@@ -313,8 +316,13 @@
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
     <datalist id="majorCategories"></datalist>
+    <datalist id="majorOptions-postgraduate"></datalist>
+    <datalist id="majorOptions-bachelor"></datalist>
+    <datalist id="majorOptions-college"></datalist>
     <script src="residency-rules.js?v=2027-five-local-cities"></script>
-    <script src="profile-matcher.js?v=2027-education-group"></script>
+    <script src="major-catalog-2027.js?v=1"></script>
+    <script src="major-catalog.js?v=1"></script>
+    <script src="profile-matcher.js?v=2027-major-search-catalog"></script>
     <script src="jobs-export.js?v=1"></script>
     <script>
         'use strict';
@@ -386,12 +394,14 @@
             const prefix = `education-${index}`;
             const option = (value, label, selected) => `<option value="${value}" ${value === selected ? 'selected' : ''}>${label}</option>`;
             const levels = Object.entries(ProfileMatcher.LABELS).map(([value, label]) => option(value, label, education.level)).join('');
+            const automatic = MajorCatalog.available(examYear);
+            const categoryField = automatic ? `<output id="${prefix}-categories" data-field="categories" class="catalog-categories" aria-live="polite"></output>` : `<input id="${prefix}-categories" data-field="categories" value="${escapeHtml(education.categories || '')}" list="majorCategories" placeholder="如：法律类" maxlength="160">`;
             return `<div class="education-row" role="group" aria-labelledby="${prefix}-title">
                 <div class="education-row-title"><h3 id="${prefix}-title">学历 ${index + 1}</h3><button type="button" class="text-button" data-remove-education="${index}" aria-label="删除学历 ${index + 1}" ${total === 1 ? 'disabled' : ''}>删除</button></div>
                 <div class="education-grid">
                     <div class="filter-group"><label for="${prefix}-level">学历层次</label><select id="${prefix}-level" data-field="level" required><option value="">请选择学历</option>${levels}</select></div>
-                    <div class="filter-group education-major"><label for="${prefix}-major">对应专业</label><input id="${prefix}-major" data-field="major" value="${escapeHtml(education.major || '')}" placeholder="如：法学、计算机科学与技术" required maxlength="160"></div>
-                    <div class="filter-group education-category"><label for="${prefix}-categories">专业类别（选填）</label><input id="${prefix}-categories" data-field="categories" value="${escapeHtml(education.categories || '')}" list="majorCategories" placeholder="如：法律类" maxlength="160"></div>
+                    <div class="filter-group education-major"><label for="${prefix}-major">对应专业${automatic ? '（可输入搜索）' : ''}</label><input id="${prefix}-major" data-field="major" value="${escapeHtml(education.major || '')}" placeholder="如：法学、计算机科学与技术" autocomplete="off" aria-describedby="${prefix}-major-help" required maxlength="160"><p id="${prefix}-major-help" class="field-help"></p><div id="${prefix}-suggestions" class="major-suggestions" role="group" aria-label="专业名称候选" hidden></div></div>
+                    <div class="filter-group education-category"><label for="${prefix}-categories">${automatic ? '专业大类（自动识别）' : '专业类别（选填）'}</label>${categoryField}</div>
                     <div class="filter-group"><label for="${prefix}-degree">该学历的学位</label><select id="${prefix}-degree" data-field="degree">${option('', '未填写', education.degree)}${option('yes', '已取得学位', education.degree)}${option('no', '无相应学位', education.degree)}</select></div>
                     <div class="filter-group"><label for="${prefix}-graduate">该学历的应届身份（${examYear}）</label><select id="${prefix}-graduate" data-field="graduate">${option('', '未填写', education.graduate)}${option('regular', '普通高校应届', education.graduate)}${option('yes', '应届未区分', education.graduate)}${option('no', '非应届身份', education.graduate)}</select></div>
                 </div></div>`;
@@ -401,6 +411,21 @@
         }
         function renderEducationRows(educations) {
             $('educationRows').innerHTML = educations.map((education, index) => educationRow(education, index, educations.length)).join('');
+            educations.forEach((_, index) => updateEducationCatalog(index));
+        }
+        function updateEducationCatalog(index, showSuggestions = false) {
+            if (!MajorCatalog.available(examYear)) return;
+            const prefix = `education-${index}`, level = $(`${prefix}-level`).value, input = $(`${prefix}-major`);
+            const group = { master: 'postgraduate', doctor: 'postgraduate', bachelor: 'bachelor', college: 'college' }[level];
+            if (group) input.setAttribute('list', `majorOptions-${group}`);
+            else input.removeAttribute('list');
+            const entry = MajorCatalog.lookup(examYear, level, input.value);
+            $(`${prefix}-categories`).value = entry ? entry.categories.join('、') : '尚未识别';
+            $(`${prefix}-major-help`).textContent = !level ? '先选择这条记录的学历层次。' : entry ? `已识别目录专业：${entry.name}` : !input.value.trim() ? '输入关键词，选择毕业证上的专业全名。' : MajorCatalog.isPlaceholder(examYear, input.value) ? '请填写毕业证上的具体专业名称，不能用专业大类或概括项代替。' : level === 'highschool' ? '本目录仅列研究生、本科、专科专业。' : '未找到该学历的同名目录专业。可选择下方候选；目录外专业按毕业证照实填写，不会自动归类。';
+            const suggestions = showSuggestions && !entry ? MajorCatalog.suggestions(examYear, level, input.value) : [];
+            const container = $(`${prefix}-suggestions`);
+            container.innerHTML = suggestions.map(name => `<button type="button" class="btn" data-select-major="${escapeHtml(name)}" data-education-index="${index}" aria-label="选择专业：${escapeHtml(name)}">${escapeHtml(name)}</button>`).join('');
+            container.hidden = !suggestions.length;
         }
         function renderResidencySelect(id, saved) {
             const select = $(id), outsideLabel = id === 'profileHousehold' ? '外省户籍' : '外省生源';
@@ -490,7 +515,7 @@
                 const graduate = /应届毕业生/.test(String(job.pd || '') + ' ' + other);
                 if (c.newGraduate === 'yes' && !graduate) return false;
                 if (c.newGraduate === 'no' && graduate) return false;
-                if (!matchesAnyKeyword(job.un, unit) || !matchesAnyKeyword(job.pn, position) || !ProfileMatcher.matchesMajorSearch(job.mj, major)) return false;
+                if (!matchesAnyKeyword(job.un, unit) || !matchesAnyKeyword(job.pn, position) || !ProfileMatcher.matchesMajorSearch(job.mj, major, { year: examYear, educationRequirement: job.ed })) return false;
                 if (include.length || exclude.length) {
                     const text = ['c','r','rc','rn','uc','un','pc','pn','pd','et','kr','rh','ed','mj','ot'].map(key => job[key] || '').join(' ').toLowerCase();
                     if (!include.every(keyword => text.includes(keyword)) || exclude.some(keyword => text.includes(keyword))) return false;
@@ -725,6 +750,9 @@
                 affiliations.forEach(value => $('affiliationFilter').add(new Option(affiliationLabels[value] || value, value)));
                 const categories = [...new Set(allJobs.flatMap(job => (job.mj || '').match(/[\u4e00-\u9fff]+类/g) || []))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
                 $('majorCategories').innerHTML = categories.map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
+                for (const [level, group] of [['master', 'postgraduate'], ['bachelor', 'bachelor'], ['college', 'college']]) {
+                    $(`majorOptions-${group}`).innerHTML = MajorCatalog.names(examYear, level).map(name => `<option value="${escapeHtml(name)}"></option>`).join('');
+                }
                 const storedProfile = ProfileMatcher.normalizeProfile(readStorage('applicantProfile', {}));
                 applicantProfile = ProfileMatcher.forExamYear(storedProfile, examYear);
                 const profileYearChanged = storedProfile.examYear !== examYear && storedProfile.educations.length > 0;
@@ -775,6 +803,15 @@
             $(`education-${educations.length - 1}-level`).focus();
         });
         $('educationRows').addEventListener('click', event => {
+            const selection = event.target.closest('[data-select-major]');
+            if (selection) {
+                const index = Number(selection.dataset.educationIndex), input = $(`education-${index}-major`);
+                input.value = selection.dataset.selectMajor;
+                input.setCustomValidity('');
+                updateEducationCatalog(index);
+                input.focus();
+                return;
+            }
             const button = event.target.closest('[data-remove-education]');
             if (!button) return;
             const educations = readEducationRows(), index = Number(button.dataset.removeEducation);
@@ -806,6 +843,13 @@
         $('cancelProfile').addEventListener('click', () => { resetProfileEditor(); $('profilePanel').open = false; });
         $('profileForm').addEventListener('input', event => {
             if (event.target.matches('[data-field]')) event.target.setCustomValidity('');
+            if (event.target.matches('[data-field="major"], [data-field="level"]')) {
+                const index = Number(event.target.id.split('-')[1]);
+                updateEducationCatalog(index, true);
+            }
+        });
+        $('educationRows').addEventListener('change', event => {
+            if (event.target.matches('[data-field="level"], [data-field="major"]')) updateEducationCatalog(Number(event.target.id.split('-')[1]), true);
         });
         $('profileEnabled').addEventListener('change', () => {
             if (saveApplicantProfile({ ...applicantProfile, enabled: $('profileEnabled').checked })) applyFilters();
