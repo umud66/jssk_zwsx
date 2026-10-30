@@ -232,8 +232,9 @@
                         <div class="filter-group"><label for="educationFilter">学历要求</label><select id="educationFilter"><option value="">全部学历</option></select></div>
                         <div class="filter-group"><label for="examTypeFilter">考试类型</label><select id="examTypeFilter"><option value="">不限</option><option value="A">A 类</option><option value="B">B 类</option><option value="C">C 类</option></select></div>
                         <div class="filter-group"><label for="recruitNumFilter">招考人数</label><select id="recruitNumFilter"><option value="">全部人数</option><option value="1">1 人</option><option value="2">2 人</option><option value="3">3 人及以上</option></select></div>
-                        <div class="filter-group"><label for="genderFilter">性别条件</label><select id="genderFilter"><option value="">全部条件</option><option value="male">男性可报</option><option value="female">女性可报</option><option value="no_requirement">无性别要求</option></select></div>
+                        <div class="filter-group"><label for="genderFilter">性别条件</label><select id="genderFilter"><option value="">不限</option><option value="male">男性可报</option><option value="female">女性可报</option><option value="no_requirement">未要求</option></select></div>
                         <div class="filter-group"><label for="newGraduateFilter">应届条件</label><select id="newGraduateFilter"><option value="">全部条件</option><option value="yes">要求应届</option><option value="no">未要求应届</option></select></div>
+                        <div class="filter-group wide"><label for="affiliationFilter">隶属关系</label><select id="affiliationFilter"><option value="">不限</option></select></div>
                         <div class="filter-group wide"><label for="majorSearch">所学专业</label><input type="search" id="majorSearch" placeholder="例如：法学，法律类" aria-describedby="majorHelp"><p class="field-help" id="majorHelp">填写完整专业或类别，多个用空格或逗号分隔；精确匹配任意一项。</p></div>
                     </div>
                     <details class="advanced-filters" id="advancedFilters">
@@ -313,7 +314,7 @@
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
     <datalist id="majorCategories"></datalist>
     <script src="residency-rules.js?v=2027-residency-clear"></script>
-    <script src="profile-matcher.js?v=2027-residency-clear"></script>
+    <script src="profile-matcher.js?v=2027-gender-filter"></script>
     <script src="jobs-export.js?v=1"></script>
     <script>
         'use strict';
@@ -322,6 +323,7 @@
             city: ['cityFilter', '城市'], education: ['educationFilter', '学历'],
             examType: ['examTypeFilter', '类别'], recruitNum: ['recruitNumFilter', '人数'],
             gender: ['genderFilter', '性别'], newGraduate: ['newGraduateFilter', '应届'],
+            affiliation: ['affiliationFilter', '隶属关系'],
             majorSearch: ['majorSearch', '专业'], unitSearch: ['unitSearch', '单位'],
             positionSearch: ['positionSearch', '职位'], includeKeywords: ['includeKeywords', '包含'],
             excludeKeywords: ['excludeKeywords', '排除']
@@ -477,15 +479,13 @@
                     if (match.status === 'mismatch' || (match.status === 'review' && !applicantProfile.includeReview)) return false;
                 }
                 if (c.city && job.c !== c.city) return false;
+                if (c.affiliation && job.r !== c.affiliation) return false;
                 if (c.education && job.ed !== c.education) return false;
                 if (c.examType && job.et !== c.examType) return false;
                 const recruits = parseInt(job.rh, 10) || 0;
                 if (c.recruitNum && (c.recruitNum === '3' ? recruits < 3 : recruits !== Number(c.recruitNum))) return false;
                 const other = String(job.ot || '');
-                const male = other.includes('男性'), female = other.includes('女性');
-                if (c.gender === 'male' && female && !male) return false;
-                if (c.gender === 'female' && male && !female) return false;
-                if (c.gender === 'no_requirement' && (male || female)) return false;
+                if (!ProfileMatcher.matchesGenderFilter(other, c.gender)) return false;
                 const graduate = /应届毕业生/.test(String(job.pd || '') + ' ' + other);
                 if (c.newGraduate === 'yes' && !graduate) return false;
                 if (c.newGraduate === 'no' && graduate) return false;
@@ -715,6 +715,12 @@
                 $('educationFilter').innerHTML = '<option value="">全部学历</option>';
                 cities.forEach(city => $('cityFilter').add(new Option(city, city)));
                 education.forEach(value => $('educationFilter').add(new Option(value, value)));
+                const affiliationOrder = ['省', '市', '县', '乡镇', '垂直'];
+                const affiliationLabels = { '省': '省级', '市': '市级', '县': '县级', '乡镇': '乡镇', '垂直': '垂直管理' };
+                const affiliationRank = value => affiliationOrder.includes(value) ? affiliationOrder.indexOf(value) : affiliationOrder.length;
+                const affiliations = [...new Set(allJobs.map(job => job.r).filter(Boolean))].sort((a, b) => affiliationRank(a) - affiliationRank(b) || a.localeCompare(b, 'zh-CN'));
+                $('affiliationFilter').replaceChildren(new Option('不限', ''));
+                affiliations.forEach(value => $('affiliationFilter').add(new Option(affiliationLabels[value] || value, value)));
                 const categories = [...new Set(allJobs.flatMap(job => (job.mj || '').match(/[\u4e00-\u9fff]+类/g) || []))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
                 $('majorCategories').innerHTML = categories.map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
                 const storedProfile = ProfileMatcher.normalizeProfile(readStorage('applicantProfile', {}));

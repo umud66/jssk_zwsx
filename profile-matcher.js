@@ -106,14 +106,34 @@
         if (listed === 'review') return { status: 'review', reason: '专业有明确括号说明，请核对完整名称及附加要求' };
         return { status: 'mismatch', reason: '专业不匹配' };
     }
+    function genderLimits(requirement) {
+        const limits = { male: false, female: false };
+        const mark = value => { limits[value.startsWith('男') ? 'male' : 'female'] = true; };
+        for (const clause of splitOutside(text(requirement), /[，,；;。\n]/)) {
+            const value = normalize(clause)
+                .replace(/(?:更适合|适合|适宜|建议)[男女]性(?:报考)?/g, '')
+                .replace(/(?:男性[、/和或及]*女性|女性[、/和或及]*男性|男女)(?:均可(?:报考)?|皆可|都可|不限)/g, '');
+            const direct = value.match(/^(?:性别[:：为]?)?([男女](?:性|生|士)?)(?:考生|人员|报考者|报考)?$/);
+            if (direct) mark(direct[1]);
+            const explicit = /(?:^|[^不无])(?:仅限|只限|限(?:定|招)?|仅招|只招|面向|须为|必须为|要求(?:为)?|性别(?:要求)?[:：为]?)(男性|女性|男生|女生|男士|女士|男(?=$|[、/]|考生|人员|报考者|报考)|女(?=$|[、/]|考生|人员|报考者|报考))/g;
+            for (const match of value.matchAll(explicit)) mark(match[1]);
+        }
+        return limits;
+    }
+    function matchesGenderFilter(requirement, selection) {
+        if (!['male', 'female', 'no_requirement'].includes(selection)) return true;
+        const limits = genderLimits(requirement);
+        if (selection === 'male') return !limits.female;
+        if (selection === 'female') return !limits.male;
+        return !limits.male && !limits.female;
+    }
     function globalConditions(job, profile) {
         const requirement = text(job.ot), reviews = [];
         if (profile.examType && text(job.et).replace(/\s|类/g, '').toUpperCase() !== profile.examType) return { status: 'mismatch', reviews: ['考试类型不匹配'] };
-        const strict = requirement.replace(/(?:适合|适宜|建议)[男女]性/g, '');
-        const male = strict.includes('男性'), female = strict.includes('女性');
-        if (male !== female) {
+        const limits = genderLimits(requirement);
+        if (limits.male || limits.female) {
             if (!profile.gender) return { status: 'mismatch', reviews: ['未填写岗位要求的性别信息'] };
-            else if ((male && profile.gender !== 'male') || (female && profile.gender !== 'female')) return { status: 'mismatch', reviews };
+            if (!matchesGenderFilter(requirement, profile.gender)) return { status: 'mismatch', reviews: ['不符合岗位明确的性别限制'] };
         }
         for (const clause of splitOutside(requirement, /[，,；;。\n]/).filter(value => /中共党员|共青团员|民主党派/.test(value))) {
             const matches = (profile.politics === 'party' && /中共党员/.test(clause))
@@ -339,5 +359,5 @@
         const selected = confirmed.length ? confirmed : matches;
         return { status: confirmed.length ? 'match' : matches.length ? 'review' : 'mismatch', matches: selected, reviews: confirmed.length ? [] : [...new Set(selected.flatMap(item => item.reviews))], requirements: selected.flatMap(item => item.requirements) };
     }
-    return Object.freeze({ LEVELS, LABELS, normalizeProfile, forExamYear, educationMatch, majorMatch, matchesMajorSearch, matchJob });
+    return Object.freeze({ LEVELS, LABELS, normalizeProfile, forExamYear, educationMatch, majorMatch, matchesMajorSearch, genderLimits, matchesGenderFilter, matchJob });
 }));
