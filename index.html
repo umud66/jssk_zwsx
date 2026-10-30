@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="江苏省2026年度公务员职位筛选工具，支持按城市、学历、专业等条件筛选，收藏职位并保存搜索条件。">
+    <meta name="description" content="江苏省2027年度公务员职位筛选工具，支持按城市、学历、专业等条件筛选，收藏职位并保存搜索条件。">
     <meta name="theme-color" content="#5752ac">
     <meta name="format-detection" content="telephone=no">
-    <title>江苏省2026年度考试录用公务员职位筛选系统</title>
+    <title>江苏省2027年度考试录用公务员职位筛选系统</title>
     <style>
         :root {
             color-scheme: light;
@@ -208,7 +208,7 @@
             <div class="brand">
                 <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5h16v16M8 5V3h8v2M2 21h20M8 9h2m4 0h2M8 13h2m4 0h2M10 21v-4h4v4"/></svg>
                 <div>
-                    <h1>江苏省2026年度公务员职位筛选</h1>
+                    <h1 id="pageTitle">江苏省2027年度公务员职位筛选</h1>
                 </div>
             </div>
             <p class="total-stats" id="totalStats" role="status">正在读取职位数据…</p>
@@ -272,7 +272,7 @@
                         </div>
                         <div id="educationRows"></div>
                         <button type="button" class="btn" id="addEducation">添加一条学历</button>
-                        <p class="field-help" style="margin-top:12px">专业类别可按<a href="https://www.jszzb.gov.cn/tzgg/art/2025/art_20e864d760f69c389220572a110495be.html" target="_blank" rel="noopener noreferrer">专业参考目录</a>选填，多个用逗号分隔。应届身份按每条学历填写；普通高校应届请选对应项，未区分时不自动授予该类地域豁免。</p>
+                        <p class="field-help" style="margin-top:12px">专业类别可按<a id="majorReference" href="https://www.jszzb.gov.cn/2027ndkslygwyzt/index.html" target="_blank" rel="noopener noreferrer">当年度专业参考目录</a>选填，多个用逗号分隔。应届身份按每条学历填写；普通高校应届请选对应项，未区分时不自动授予该类地域豁免。</p>
                         <div class="profile-actions"><button type="submit" class="btn btn-primary" id="saveProfile" disabled>保存并初筛</button><button type="button" class="btn" id="cancelProfile">取消编辑</button></div>
                     </form>
                 </details>
@@ -320,6 +320,8 @@
         };
         let allJobs = [], filteredJobs = [], favorites = [], history = [];
         let currentPage = 1, pageSize = 20, favoritesOnly = false, loaded = false;
+        let examYear = 2027;
+        const annualStorage = new Set(['jobFavorites', 'searchHistory', 'lastSearchConditions']);
         let filterTimer, toastTimer;
         let activeConditions = {};
         const mobileLayout = window.matchMedia('(max-width: 760px)');
@@ -335,10 +337,12 @@
             return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
         }
         function readStorage(key, fallback) {
-            try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+            const storageKey = annualStorage.has(key) ? `${key}:${examYear}` : key;
+            try { return JSON.parse(localStorage.getItem(storageKey)) ?? fallback; } catch { return fallback; }
         }
         function writeStorage(key, value, notify = true) {
-            try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+            const storageKey = annualStorage.has(key) ? `${key}:${examYear}` : key;
+            try { localStorage.setItem(storageKey, JSON.stringify(value)); return true; }
             catch { if (notify) showToast('无法保存，请允许浏览器使用本地存储后重试。'); return false; }
         }
         function showToast(message) {
@@ -347,7 +351,7 @@
             $('toast').hidden = false;
             toastTimer = setTimeout(() => { $('toast').hidden = true; }, 3200);
         }
-        // 保留原有标识规则，兼容已经收藏的职位。
+        // 职位标识保持稳定；收藏存储按招录年度隔离。
         function generateJobId(job) {
             return [job.c, job.rn, job.uc, job.pc].map(value => value || '').join('_').replace(/\s+/g, '_');
         }
@@ -377,7 +381,7 @@
                     <div class="filter-group education-major"><label for="${prefix}-major">对应专业</label><input id="${prefix}-major" data-field="major" value="${escapeHtml(education.major || '')}" placeholder="如：法学、计算机科学与技术" required maxlength="160"></div>
                     <div class="filter-group education-category"><label for="${prefix}-categories">专业类别（选填）</label><input id="${prefix}-categories" data-field="categories" value="${escapeHtml(education.categories || '')}" list="majorCategories" placeholder="如：法律类" maxlength="160"></div>
                     <div class="filter-group"><label for="${prefix}-degree">该学历的学位</label><select id="${prefix}-degree" data-field="degree">${option('', '未填写', education.degree)}${option('yes', '已取得学位', education.degree)}${option('no', '无相应学位', education.degree)}</select></div>
-                    <div class="filter-group"><label for="${prefix}-graduate">该学历的应届身份</label><select id="${prefix}-graduate" data-field="graduate">${option('', '未填写', education.graduate)}${option('regular', '普通高校应届', education.graduate)}${option('yes', '应届未区分', education.graduate)}${option('no', '非应届身份', education.graduate)}</select></div>
+                    <div class="filter-group"><label for="${prefix}-graduate">该学历的应届身份（${examYear}）</label><select id="${prefix}-graduate" data-field="graduate">${option('', '未填写', education.graduate)}${option('regular', '普通高校应届', education.graduate)}${option('yes', '应届未区分', education.graduate)}${option('no', '非应届身份', education.graduate)}</select></div>
                 </div></div>`;
         }
         function readEducationRows() {
@@ -414,7 +418,7 @@
             $('includeReview').disabled = !applicantProfile.enabled;
         }
         function saveApplicantProfile(next) {
-            const profile = ProfileMatcher.normalizeProfile(next);
+            const profile = ProfileMatcher.normalizeProfile({ ...next, examYear });
             if (!writeStorage('applicantProfile', profile)) { renderProfileControls(); return false; }
             applicantProfile = profile;
             profileMatches = new Map();
@@ -422,7 +426,7 @@
             return true;
         }
         function getProfileMatch(job) {
-            if (!profileMatches.has(job)) profileMatches.set(job, ProfileMatcher.matchJob(job, applicantProfile));
+            if (!profileMatches.has(job)) profileMatches.set(job, ProfileMatcher.matchJob(job, applicantProfile, examYear));
             return profileMatches.get(job);
         }
         function renderProfileStatus() {
@@ -567,7 +571,7 @@
                 $('resultsContainer').innerHTML = `<div class="empty-state">${emptyFavorites ? starIcon : searchIcon}<h3>${emptyFavorites ? '还没有收藏的职位' : '没有找到符合条件的职位'}</h3><p>${emptyFavorites ? '在职位旁点击收藏，方便下次继续比较。' : applicantProfile.enabled ? '请补全实际具备的报考资格，或移除其他筛选条件。未填写的资格不会放入待核对。' : '可以移除上方条件，或重置筛选后重新查找。'}</p><button type="button" class="btn" data-empty-action="${action}">${emptyFavorites ? '浏览全部职位' : applicantProfile.enabled ? '调整报考资料' : '重置筛选'}</button></div>`;
             }
             renderProfileStatus();
-            document.title = `江苏省2026年度公务员职位筛选 · ${favoritesOnly ? '收藏 ' : ''}${count(total)} 个职位`;
+            document.title = `江苏省${examYear}年度公务员职位筛选 · ${favoritesOnly ? '收藏 ' : ''}${count(total)} 个职位`;
         }
         function toggleFavorite(id) {
             const index = favorites.findIndex(job => generateJobId(job) === id);
@@ -599,7 +603,7 @@
             const job = filteredJobs.find(item => generateJobId(item) === id);
             if (!job) return;
             const fields = {c:'城市 / 系统', rn:'地区', un:'单位', uc:'单位代码', pn:'职位', pc:'职位代码', rh:'招考人数', ed:'学历', mj:'专业', ot:'其他要求', pd:'职位简介', et:'考试类别', kr:'开考比例'};
-            const text = Object.entries(fields).map(([key, label]) => `${label}：${job[key] || '未注明'}`).join('\n');
+            const text = `招录年度：${examYear}\n` + Object.entries(fields).map(([key, label]) => `${label}：${job[key] || '未注明'}`).join('\n');
             try { await navigator.clipboard.writeText(text); showToast('已复制完整职位信息'); }
             catch { showToast('复制失败，请展开详情后选择文字复制。'); }
         }
@@ -634,10 +638,14 @@
             $('resultsContainer').setAttribute('aria-busy', 'true');
             $('resultsContainer').innerHTML = '<div class="empty-state" role="status"><p>正在读取职位数据…</p><div class="loading-line"></div></div>';
             try {
-                const response = await fetch('data.json');
+                const response = await fetch('data.json', { cache: 'no-cache' });
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 if (!Array.isArray(data.data) || !data.data.length || !data.data.every(job => job && typeof job === 'object' && typeof job.pn === 'string' && typeof job.c === 'string')) throw new Error('invalid data');
+                if (!Number.isInteger(data.year) || data.year < 2020 || data.year > 2100 || data.total !== data.data.length) throw new Error('invalid data metadata');
+                examYear = data.year;
+                $('pageTitle').textContent = `江苏省${examYear}年度公务员职位筛选`;
+                $('majorReference').href = `https://www.jszzb.gov.cn/${examYear}ndkslygwyzt/index.html`;
                 allJobs = data.data;
                 const cities = [...new Set(allJobs.map(job => job.c).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
                 const education = [...new Set(allJobs.map(job => job.ed).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
@@ -647,12 +655,16 @@
                 education.forEach(value => $('educationFilter').add(new Option(value, value)));
                 const categories = [...new Set(allJobs.flatMap(job => (job.mj || '').match(/[\u4e00-\u9fff]+类/g) || []))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
                 $('majorCategories').innerHTML = categories.map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
-                applicantProfile = ProfileMatcher.normalizeProfile(readStorage('applicantProfile', {}));
+                const storedProfile = ProfileMatcher.normalizeProfile(readStorage('applicantProfile', {}));
+                applicantProfile = ProfileMatcher.forExamYear(storedProfile, examYear);
+                const profileYearChanged = storedProfile.examYear !== examYear && storedProfile.educations.length > 0;
+                if (profileYearChanged) writeStorage('applicantProfile', applicantProfile, false);
                 if (!applicantProfile.educations.length) applicantProfile.enabled = false;
                 profileMatches = new Map();
                 renderProfileControls();
                 resetProfileEditor();
-                $('totalStats').textContent = `${count(allJobs.length)} 个职位 · ${cities.length} 个地区与系统`;
+                const recruits = allJobs.reduce((sum, job) => sum + (parseInt(job.rh, 10) || 0), 0);
+                $('totalStats').textContent = `${count(allJobs.length)} 个职位 · 招录 ${count(recruits)} 人 · ${cities.length} 个地区与系统`;
                 const storedFavorites = readStorage('jobFavorites', []), storedHistory = readStorage('searchHistory', []);
                 favorites = Array.isArray(storedFavorites) ? storedFavorites.filter(job => job && typeof job === 'object' && typeof job.pn === 'string' && typeof job.c === 'string') : [];
                 history = Array.isArray(storedHistory) ? storedHistory.filter(item => item && typeof item === 'object' && !Array.isArray(item)).slice(0, 20) : [];
@@ -664,6 +676,7 @@
                 ['allJobsView', 'favoritesView', 'sortOrder'].forEach(id => { $(id).disabled = false; });
                 renderHistory();
                 applyFilters();
+                if (profileYearChanged) showToast(`已切换至 ${examYear} 年度，学历资料已保留，请重新确认各学历的应届身份。`);
             } catch {
                 $('totalStats').textContent = '职位数据暂时无法读取';
                 const message = '职位数据暂时无法读取，请刷新页面或稍后重试。';

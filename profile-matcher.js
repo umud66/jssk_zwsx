@@ -16,6 +16,7 @@
         const years = typeof source.workYears === 'number' || typeof source.workYears === 'string' ? String(source.workYears).trim() : '';
         return {
             version: 1,
+            examYear: Number.isInteger(source.examYear) ? source.examYear : 2026,
             enabled: source.enabled === true,
             includeReview: source.includeReview !== false,
             gender: allowed(source.gender, ['male', 'female']),
@@ -32,6 +33,14 @@
                 degree: allowed(item.degree, ['yes', 'no']), graduate: allowed(item.graduate, ['yes', 'no', 'regular'])
             })) : []
         };
+    }
+    function forExamYear(value, year) {
+        const profile = normalizeProfile(value);
+        if (profile.examYear !== year) {
+            profile.educations = profile.educations.map(education => ({ ...education, graduate: ['yes', 'regular'].includes(education.graduate) ? '' : education.graduate }));
+            profile.examYear = year;
+        }
+        return profile;
     }
     function educationMatch(requirement, level) {
         const text = normalize(requirement), rank = LEVELS[level];
@@ -268,7 +277,7 @@
         const mismatch = unresolved.length > 0;
         return { status: mismatch ? 'mismatch' : unresolved.length ? 'review' : 'match', reviews: unresolved.map(item => item.detail), requirements };
     }
-    function matchJob(job, profile) {
+    function matchJob(job, profile, year = 2026) {
         const global = globalConditions(job, profile);
         if (global.status === 'mismatch') return { status: 'mismatch', matches: [], reviews: global.reviews, requirements: [] };
         const matches = [];
@@ -286,7 +295,7 @@
             const degree = degreeConditions(other, education, profile);
             if (degree.status === 'mismatch') return;
             reviews.push(...degree.reviews);
-            const residency = residencyRules.match(job, education, profile);
+            const residency = residencyRules.match(job, education, profile, year);
             if (residency.status === 'mismatch') return;
             if (residency.status === 'review') reviews.push(residency.reason);
             const credentials = credentialConditions(other, education, profile);
@@ -310,5 +319,5 @@
         const selected = confirmed.length ? confirmed : matches;
         return { status: confirmed.length ? 'match' : matches.length ? 'review' : 'mismatch', matches: selected, reviews: confirmed.length ? [] : [...new Set(selected.flatMap(item => item.reviews))], requirements: selected.flatMap(item => item.requirements) };
     }
-    return Object.freeze({ LEVELS, LABELS, normalizeProfile, educationMatch, majorMatch, matchJob });
+    return Object.freeze({ LEVELS, LABELS, normalizeProfile, forExamYear, educationMatch, majorMatch, matchJob });
 }));

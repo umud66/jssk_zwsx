@@ -5,6 +5,10 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
     'use strict';
     const PROVINCE_SOURCE = 'https://www.jszzb.gov.cn/tzgg/art/2025/art_0b70c8f3fb4f2c5d852180928e946634.html';
+    const PROVINCE_SOURCES = {
+        2026: PROVINCE_SOURCE,
+        2027: 'https://www.jszzb.gov.cn/2027ndkslygwyzt/zkgg/art/2026/art_f9d91bae1e764231843f0be62ffadffa.html'
+    };
     // 县区名称对应当前2026职位数据；用于避免仅凭“鼓楼区”等重名地区误匹配。
     const AREAS = {
         '南京市': ['玄武区','秦淮区','建邺区','鼓楼区','雨花台区','栖霞区','浦口区','六合区','江宁区','溧水区','高淳区','江北新区'],
@@ -123,7 +127,7 @@
         if (waiveHousehold || waiveOrigin) return result('match', `以该条学历专业及相应学位报考，适用岗位原文的${[waiveHousehold ? '户籍' : '', waiveOrigin ? '生源' : ''].filter(Boolean).join(' / ')}豁免`);
         return result('match', `已核对岗位明确的${restrictions.map(item => item.type === 'origin' ? '生源' : item.type === 'household' ? '户籍' : '户籍 / 生源').join('、')}要求`);
     }
-    function match(job, education, profile) {
+    function match(job, education, profile, year = 2026) {
         const restrictions = explicitRestrictions(job, education);
         if (restrictions.length) return checkRestrictions(restrictions, job, education, profile);
         const raw = text(job.ot);
@@ -131,15 +135,19 @@
         if (unlimited) return result('match', '岗位原文明确不限制户籍 / 生源');
         const context = jobPlace(job), policy = POLICIES[context.city], code = Number(job.pc);
         const postgraduate = isPostgraduate(education);
+        const provinceSource = PROVINCE_SOURCES[year];
+        if (!provinceSource) return result('review', `${year}年度户籍 / 生源政策尚未纳入，请核对当年度简章`);
         // 定向应届职位的江苏生源要求优先于一般应届本科豁免。
-        if ((code >= 60 && code <= 69) || /面向2026年普通高校应届毕业生/.test(raw)) {
-            if (postgraduate) return result('match', '以该条研究生专业及相应学位报考，适用定向应届职位的生源豁免', PROVINCE_SOURCE);
-            if (matchesPlace(profile.origin, { province: '江苏省' })) return result('match', '定向应届职位：已核对江苏生源', PROVINCE_SOURCE);
-            return result('mismatch', '该定向应届职位须为江苏生源；未填生源不能满足要求', PROVINCE_SOURCE);
+        if ((code >= 60 && code <= 69) || new RegExp(`面向${year}年普通高校应届毕业生`).test(raw)) {
+            if (postgraduate) return result('match', '以该条研究生专业及相应学位报考，适用定向应届职位的生源豁免', provinceSource);
+            if (matchesPlace(profile.origin, { province: '江苏省' })) return result('match', '定向应届职位：已核对江苏生源', provinceSource);
+            return result('mismatch', '该定向应届职位须为江苏生源；未填生源不能满足要求', provinceSource);
         }
-        if (job.c === '省级' || (code >= 50 && code <= 59)) return result('match', '', PROVINCE_SOURCE);
-        if (job.c === '监狱戒毒') return result('review', '此岗位适用司法行政专项简章，户籍 / 生源规则需另行核对', PROVINCE_SOURCE);
+        if (job.c === '省级' || (year === 2026 && code >= 50 && code <= 59)) return result('match', '', provinceSource);
+        if (job.c === '监狱戒毒') return result('review', '此岗位适用司法行政专项简章，户籍 / 生源规则需另行核对', provinceSource);
         if (!context.city) return result('match', '');
+        // 地方简章按年度生效，未核对的新年度不能套用旧年度的准入或豁免。
+        if (year !== 2026) return result('review', `${year}年度${context.city}户籍 / 生源通用政策待核对；已检查岗位原文地域限制，未套用2026年度规则`, provinceSource);
         if (!policy) return result('review', `${context.city}的通用户籍政策尚未纳入，不能据此确认地域资格`, PROVINCE_SOURCE);
         if (policy.unrestricted) return result('match', `${context.city}一般职位不限制户籍 / 生源；已另行检查岗位特殊规定`, policy.source);
         const regular = education.graduate === 'regular';
