@@ -110,6 +110,8 @@
         .sort-group { display: flex; align-items: center; gap: 8px; }
         .sort-group select { width: auto; font-size: 13px; padding: 7px 8px; height: 40px; }
         .sort-group label { color: var(--muted); font-weight: 400; }
+        .results-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-left: auto; }
+        .export-button { white-space: nowrap; }
         .results-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; margin: 22px 0 14px; }
         .results-heading h2 { font-size: 17px; font-weight: 500; }
         .result-count { font-size: 23px; color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -177,6 +179,8 @@
             .results-toolbar { gap: 12px; }
             .view-button { padding: 8px 12px; }
             .sort-group { margin-left: auto; }
+            .results-actions { width: 100%; justify-content: space-between; gap: 10px; }
+            .results-actions .sort-group { margin-left: 0; }
             .sort-group label { display: none; }
             .job-card { padding: 18px 16px 0; }
             .job-title { font-size: 17px; }
@@ -287,7 +291,10 @@
                     <button type="button" class="view-button" id="allJobsView" aria-pressed="true" disabled>全部职位</button>
                     <button type="button" class="view-button" id="favoritesView" aria-pressed="false" disabled>我的收藏 <span class="favorites-count" id="favoritesCount">0</span></button>
                 </div>
-                <div class="sort-group"><label for="sortOrder">排序</label><select id="sortOrder" aria-label="结果排序" disabled><option value="default">默认排序</option><option value="recruit">招考人数最多</option></select></div>
+                <div class="results-actions">
+                    <div class="sort-group"><label for="sortOrder">排序</label><select id="sortOrder" aria-label="结果排序" disabled><option value="default">默认排序</option><option value="recruit">招考人数最多</option></select></div>
+                    <button type="button" class="btn export-button" id="exportResults" disabled title="导出全部筛选结果，包含所有分页"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4"/></svg><span id="exportLabel">导出 Excel</span></button>
+                </div>
             </div>
             <div class="results-heading" id="resultsHeading" tabindex="-1">
                 <h2 id="resultSummary" aria-live="polite" aria-atomic="true">找到 <span class="result-count" id="resultCount">—</span> 个职位</h2>
@@ -307,6 +314,7 @@
     <datalist id="majorCategories"></datalist>
     <script src="residency-rules.js?v=2027-residency-clear"></script>
     <script src="profile-matcher.js?v=2027-residency-clear"></script>
+    <script src="jobs-export.js?v=1"></script>
     <script>
         'use strict';
         const $ = id => document.getElementById(id);
@@ -321,6 +329,7 @@
         let allJobs = [], filteredJobs = [], favorites = [], history = [];
         let currentPage = 1, pageSize = 20, favoritesOnly = false, loaded = false;
         let examYear = 2027;
+        let exporting = false, excelLibraryPromise;
         const annualStorage = new Set(['jobFavorites', 'searchHistory', 'lastSearchConditions']);
         let filterTimer, toastTimer;
         let activeConditions = {};
@@ -552,6 +561,7 @@
         function getTotalPages() { return Math.max(1, Math.ceil(filteredJobs.length / pageSize)); }
         function renderResults() {
             const total = filteredJobs.length, pages = getTotalPages();
+            syncExportButton();
             currentPage = Math.min(Math.max(currentPage, 1), pages);
             const start = (currentPage - 1) * pageSize;
             const favoriteIds = new Set(favorites.map(generateJobId));
@@ -581,6 +591,48 @@
             }
             renderProfileStatus();
             document.title = `江苏省${examYear}年度公务员职位筛选 · ${favoritesOnly ? '收藏 ' : ''}${count(total)} 个职位`;
+        }
+        function syncExportButton() {
+            $('exportResults').disabled = !loaded || !filteredJobs.length || exporting;
+            $('exportResults').setAttribute('aria-busy', String(exporting));
+            $('exportResults').setAttribute('aria-label', `导出全部 ${count(filteredJobs.length)} 个筛选职位为 Excel，包含所有分页`);
+            $('exportLabel').textContent = exporting ? '正在导出…' : '导出 Excel';
+        }
+        function loadExcelLibrary() {
+            if (window.XLSX) return Promise.resolve(window.XLSX);
+            if (!excelLibraryPromise) excelLibraryPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'vendor/xlsx.mini.min.js?v=0.20.3';
+                script.onload = () => {
+                    if (window.XLSX) resolve(window.XLSX);
+                    else { excelLibraryPromise = null; script.remove(); reject(new Error('Excel library unavailable')); }
+                };
+                script.onerror = () => { excelLibraryPromise = null; script.remove(); reject(new Error('Excel library failed to load')); };
+                document.head.append(script);
+            });
+            return excelLibraryPromise;
+        }
+        async function exportFilteredJobs() {
+            if (!loaded || exporting) return;
+            applyFilters(false);
+            if (!filteredJobs.length) return;
+            const jobs = [...filteredJobs], createdAt = new Date();
+            const options = { year: examYear, profileEnabled: applicantProfile.enabled,
+                includeReview: applicantProfile.includeReview, createdAt,
+                matches: applicantProfile.enabled ? new Map(jobs.map(job => [job, getProfileMatch(job)])) : new Map(),
+                filters: conditionLabels(activeConditions).map(item => item.text),
+                scope: favoritesOnly ? '我的收藏' : '全部职位', sort: $('sortOrder').selectedOptions[0].textContent };
+            exporting = true;
+            syncExportButton();
+            try {
+                const XLSX = await loadExcelLibrary();
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                const workbook = JobExport.createWorkbook(XLSX, jobs, options);
+                XLSX.writeFile(workbook, JobExport.filename(options.year, jobs.length, createdAt), { bookType: 'xlsx', compression: true });
+                showToast(`已发起下载，共 ${count(jobs.length)} 个筛选职位，包含所有分页。`);
+            } catch {
+                showToast('Excel 导出失败，请重试；若未下载，请检查浏览器的下载设置。');
+            } finally { exporting = false; syncExportButton(); }
         }
         function toggleFavorite(id) {
             const index = favorites.findIndex(job => generateJobId(job) === id);
@@ -641,6 +693,7 @@
         function switchView(onlyFavorites) { favoritesOnly = onlyFavorites; applyFilters(); }
         async function loadData() {
             loaded = false;
+            syncExportButton();
             $('saveProfile').disabled = true;
             $('filterFields').disabled = true;
             ['allJobsView', 'favoritesView', 'sortOrder'].forEach(id => { $(id).disabled = true; });
@@ -763,6 +816,7 @@
         $('sortOrder').addEventListener('change', () => applyFilters());
         $('allJobsView').addEventListener('click', () => switchView(false));
         $('favoritesView').addEventListener('click', () => switchView(true));
+        $('exportResults').addEventListener('click', exportFilteredJobs);
         $('firstPage').addEventListener('click', () => setPage(1));
         $('previousPage').addEventListener('click', () => setPage(currentPage - 1));
         $('nextPage').addEventListener('click', () => setPage(currentPage + 1));
