@@ -9,6 +9,7 @@
         2026: PROVINCE_SOURCE,
         2027: 'https://www.jszzb.gov.cn/2027ndkslygwyzt/zkgg/art/2026/art_f9d91bae1e764231843f0be62ffadffa.html'
     };
+    const JUDICIAL_SOURCE_2027 = 'https://www.jszzb.gov.cn/2027ndkslygwyzt/zkgg/art/2026/art_23729b6aca9642faa0cf71ed6a2ef65e.html';
     // 县区名称对应当前2026职位数据；用于避免仅凭“鼓楼区”等重名地区误匹配。
     const AREAS = {
         '南京市': ['玄武区','秦淮区','建邺区','鼓楼区','雨花台区','栖霞区','浦口区','六合区','江宁区','溧水区','高淳区','江北新区'],
@@ -143,12 +144,21 @@
             if (matchesPlace(profile.origin, { province: '江苏省' })) return result('match', '定向应届职位：已核对江苏生源', provinceSource);
             return result('mismatch', '该定向应届职位须为江苏生源；未填生源不能满足要求', provinceSource);
         }
-        if (job.c === '省级' || (year === 2026 && code >= 50 && code <= 59)) return result('match', '', provinceSource);
-        if (job.c === '监狱戒毒') return result('review', '此岗位适用司法行政专项简章，户籍 / 生源规则需另行核对', provinceSource);
+        if (job.c === '省级' || (year === 2026 && code >= 50 && code <= 59)) return result('match', '一般职位不限户籍、生源；已检查岗位原文的特殊要求', provinceSource);
+        if (job.c === '监狱戒毒') {
+            if (year === 2027 && /警员|人民警察/.test(text(job.pn))) return result('match', '监狱、戒毒系统人民警察职位不限户籍、生源', JUDICIAL_SOURCE_2027);
+            return result('review', '需核对司法行政专项简章中的地域条件');
+        }
         if (!context.city) return result('match', '');
+        if (year === 2027) {
+            // 本年度省级公告已明确的豁免仍应执行，且只适用于正在匹配的学历专业。
+            if (postgraduate) return result('match', '以此研究生专业及相应学位报考，一般职位不限户籍、生源', provinceSource);
+            const hasCurrentGraduate = profile.educations.some(item => ['master', 'doctor'].includes(item.level) && isGraduate(item));
+            if (education.level === 'bachelor' && education.graduate === 'regular' && !hasCurrentGraduate) return result('match', '以2027年普通高校应届本科学历专业报考，一般职位不限生源', provinceSource);
+        }
         // 地方简章按年度生效，未核对的新年度不能套用旧年度的准入或豁免。
-        if (year !== 2026) return result('review', `${year}年度${context.city}户籍 / 生源通用政策待核对；已检查岗位原文地域限制，未套用2026年度规则`, provinceSource);
-        if (!policy) return result('review', `${context.city}的通用户籍政策尚未纳入，不能据此确认地域资格`, PROVINCE_SOURCE);
+        if (year !== 2026) return result('review', `职位表未列户籍、生源限制；本工具尚未核实${context.city}${year}年简章，地域资格未确认`);
+        if (!policy) return result('review', `职位表未列户籍、生源限制；本工具尚未核实${context.city}${year}年简章，地域资格未确认`);
         if (policy.unrestricted) return result('match', `${context.city}一般职位不限制户籍 / 生源；已另行检查岗位特殊规定`, policy.source);
         const regular = education.graduate === 'regular';
         if (postgraduate && (!isGraduate(education) || regular)) return result('match', `以该条研究生专业及相应学位报考，适用${context.city}通用户籍 / 生源豁免`, policy.source);

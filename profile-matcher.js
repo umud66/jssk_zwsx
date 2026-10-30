@@ -72,18 +72,38 @@
         if (part) parts.push(part);
         return parts;
     }
+    function listedMajorMatch(parts, major) {
+        if (!major) return 'mismatch';
+        if (parts.includes(major)) return 'match';
+        // 只核对明确的括号说明；不同专业不能靠名称包含关系进入待核对。
+        const ownName = major.match(/^([^()]+)\(.*\)$/)?.[1];
+        for (const part of parts) {
+            if (ownName && part === ownName) return 'review';
+            const annotated = part.match(/^([^()]+)\((.*)\)$/);
+            if (!annotated) continue;
+            if (annotated[1] === major) return 'review';
+            if (/^含[:：]/.test(annotated[2]) && splitMajors(annotated[2].replace(/^含[:：]/, '')).includes(major)) return 'review';
+        }
+        return 'mismatch';
+    }
+    function matchesMajorSearch(requirement, keywords) {
+        if (!keywords.length) return true;
+        const parts = splitMajors(requirement);
+        return keywords.some(keyword => listedMajorMatch(parts, normalize(keyword)) !== 'mismatch');
+    }
     function majorMatch(requirement, education) {
         const text = normalize(requirement), major = normalize(education.major);
         if (!text) return { status: 'review', reason: '岗位未注明专业，需核对' };
         if (/^(不限|专业不限|不限专业|不限制专业)$/.test(text)) return { status: 'match', reason: '岗位不限专业' };
         if (/^(不限|专业不限|不限专业|不限制专业)\(/.test(text)) return { status: 'review', reason: '不限专业但有附加条件，请核对原文' };
         const parts = splitMajors(text), categories = splitMajors(education.categories);
-        if (parts.includes(major)) return { status: 'match', reason: `专业名称匹配：${education.major}` };
+        const listed = listedMajorMatch(parts, major);
+        if (listed === 'match') return { status: 'match', reason: `专业名称匹配：${education.major}` };
         const category = categories.find(value => parts.includes(value));
         if (category) return { status: 'match', reason: `按已填写专业类别匹配：${category}` };
         const possibleCategory = parts.find(value => value.endsWith('类') && (major.startsWith(value.slice(0, -1)) || (value === '法律类' && /^(法学|法律)(\(.*\))?$/.test(major))));
         if (possibleCategory) return { status: 'review', reason: `可能属于${possibleCategory}，请确认该学历的专业类别` };
-        if (parts.some(value => !value.endsWith('类') && (value.includes(major) || major.includes(value)))) return { status: 'review', reason: '专业名称相近，需核对岗位要求的完整名称' };
+        if (listed === 'review') return { status: 'review', reason: '专业有明确括号说明，请核对完整名称及附加要求' };
         return { status: 'mismatch', reason: '专业不匹配' };
     }
     function globalConditions(job, profile) {
@@ -319,5 +339,5 @@
         const selected = confirmed.length ? confirmed : matches;
         return { status: confirmed.length ? 'match' : matches.length ? 'review' : 'mismatch', matches: selected, reviews: confirmed.length ? [] : [...new Set(selected.flatMap(item => item.reviews))], requirements: selected.flatMap(item => item.requirements) };
     }
-    return Object.freeze({ LEVELS, LABELS, normalizeProfile, forExamYear, educationMatch, majorMatch, matchJob });
+    return Object.freeze({ LEVELS, LABELS, normalizeProfile, forExamYear, educationMatch, majorMatch, matchesMajorSearch, matchJob });
 }));
