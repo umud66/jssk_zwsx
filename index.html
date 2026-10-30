@@ -277,7 +277,7 @@
                         </div>
                         <div id="educationRows"></div>
                         <button type="button" class="btn" id="addEducation">添加一条学历</button>
-                        <p class="field-help" style="margin-top:12px">专业类别可按<a id="majorReference" href="https://www.jszzb.gov.cn/2027ndkslygwyzt/zkgg/art/2026/art_96ed0e072c8b4abc8d5f485f02a58fb6.html" target="_blank" rel="noopener noreferrer">当年度专业参考目录</a>选填，多个用逗号分隔。应届身份按每条学历填写；普通高校应届请选对应项，未区分时不自动授予该类地域豁免。</p>
+                        <p class="field-help" style="margin-top:12px">专业类别可按<a id="majorReference" href="https://www.jszzb.gov.cn/2027ndkslygwyzt/zkgg/art/2026/art_96ed0e072c8b4abc8d5f485f02a58fb6.html" target="_blank" rel="noopener noreferrer">当年度专业参考目录</a>选填，多个用逗号分隔。研究生地域豁免按该条学历、对应专业和相应学位判断，不能借给本科专业；应届身份按每条学历填写。</p>
                         <div class="profile-actions"><button type="submit" class="btn btn-primary" id="saveProfile" disabled>保存并初筛</button><button type="button" class="btn" id="cancelProfile">取消编辑</button></div>
                     </form>
                 </details>
@@ -313,8 +313,8 @@
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
     <datalist id="majorCategories"></datalist>
-    <script src="residency-rules.js?v=2027-residency-clear"></script>
-    <script src="profile-matcher.js?v=2027-gender-filter"></script>
+    <script src="residency-rules.js?v=2027-five-local-cities"></script>
+    <script src="profile-matcher.js?v=2027-education-group"></script>
     <script src="jobs-export.js?v=1"></script>
     <script>
         'use strict';
@@ -371,7 +371,8 @@
         }
         function setConditions(conditions) {
             Object.entries(filterFields).forEach(([key, [id]]) => {
-                $(id).value = typeof conditions[key] === 'string' ? conditions[key] : '';
+                const value = typeof conditions[key] === 'string' ? conditions[key] : '';
+                $(id).value = key === 'education' ? ProfileMatcher.educationFilterValue(value) : value;
             });
             $('advancedFilters').open = ['unitSearch', 'positionSearch', 'includeKeywords', 'excludeKeywords'].some(key => $(filterFields[key][0]).value);
         }
@@ -480,7 +481,7 @@
                 }
                 if (c.city && job.c !== c.city) return false;
                 if (c.affiliation && job.r !== c.affiliation) return false;
-                if (c.education && job.ed !== c.education) return false;
+                if (!ProfileMatcher.matchesEducationFilter(job, c.education)) return false;
                 if (c.examType && job.et !== c.examType) return false;
                 const recruits = parseInt(job.rh, 10) || 0;
                 if (c.recruitNum && (c.recruitNum === '3' ? recruits < 3 : recruits !== Number(c.recruitNum))) return false;
@@ -524,7 +525,8 @@
         function conditionLabels(conditions) {
             return Object.entries(filterFields).filter(([key]) => conditions[key]).map(([key, [id, label]]) => {
                 const input = $(id);
-                const option = input.tagName === 'SELECT' ? [...input.options].find(item => item.value === conditions[key]) : null;
+                const value = key === 'education' ? ProfileMatcher.educationFilterValue(conditions[key]) : conditions[key];
+                const option = input.tagName === 'SELECT' ? [...input.options].find(item => item.value === value) : null;
                 return { key, text: `${label}：${option ? option.textContent : conditions[key]}` };
             });
         }
@@ -654,7 +656,7 @@
         function saveSearchHistory() {
             const conditions = readConditions();
             const signature = JSON.stringify(conditions);
-            const updated = [{...conditions, saveTime: new Date().toLocaleString('zh-CN')}, ...history.filter(item => JSON.stringify(Object.fromEntries(Object.keys(filterFields).map(key => [key, item[key] || '']))) !== signature)].slice(0, 20);
+            const updated = [{...conditions, saveTime: new Date().toLocaleString('zh-CN')}, ...history.filter(item => JSON.stringify(Object.fromEntries(Object.keys(filterFields).map(key => [key, key === 'education' ? ProfileMatcher.educationFilterValue(item[key] || '') : item[key] || '']))) !== signature)].slice(0, 20);
             if (!writeStorage('searchHistory', updated)) return;
             history = updated;
             renderHistory();
@@ -710,11 +712,11 @@
                 $('majorReference').href = examYear === 2027 ? 'https://www.jszzb.gov.cn/2027ndkslygwyzt/zkgg/art/2026/art_96ed0e072c8b4abc8d5f485f02a58fb6.html' : `https://www.jszzb.gov.cn/${examYear}ndkslygwyzt/index.html`;
                 allJobs = data.data;
                 const cities = [...new Set(allJobs.map(job => job.c).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
-                const education = [...new Set(allJobs.map(job => job.ed).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+                const education = [...new Set(allJobs.map(job => ProfileMatcher.educationFilterGroup(job)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
                 $('cityFilter').innerHTML = '<option value="">全部地区</option>';
                 $('educationFilter').innerHTML = '<option value="">全部学历</option>';
                 cities.forEach(city => $('cityFilter').add(new Option(city, city)));
-                education.forEach(value => $('educationFilter').add(new Option(value, value)));
+                education.forEach(value => $('educationFilter').add(new Option(value === '研究生' ? '研究生/硕士' : value, value)));
                 const affiliationOrder = ['省', '市', '县', '乡镇', '垂直'];
                 const affiliationLabels = { '省': '省级', '市': '市级', '县': '县级', '乡镇': '乡镇', '垂直': '垂直管理' };
                 const affiliationRank = value => affiliationOrder.includes(value) ? affiliationOrder.indexOf(value) : affiliationOrder.length;

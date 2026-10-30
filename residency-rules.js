@@ -10,6 +10,8 @@
         2027: 'https://www.jszzb.gov.cn/2027ndkslygwyzt/zkgg/art/2026/art_f9d91bae1e764231843f0be62ffadffa.html'
     };
     const JUDICIAL_SOURCE_2027 = 'https://www.jszzb.gov.cn/2027ndkslygwyzt/zkgg/art/2026/art_23729b6aca9642faa0cf71ed6a2ef65e.html';
+    // 2026-10-30 用户指定的2027地区规则；不借用2026政策或伪造官方来源。
+    const LOCAL_CITIES_2027 = new Set(['苏州市', '无锡市', '常州市', '镇江市', '连云港市']);
     // 县区名称对应当前2026职位数据；用于避免仅凭“鼓楼区”等重名地区误匹配。
     const AREAS = {
         '南京市': ['玄武区','秦淮区','建邺区','鼓楼区','雨花台区','栖霞区','浦口区','六合区','江宁区','溧水区','高淳区','江北新区'],
@@ -138,10 +140,18 @@
         const postgraduate = isPostgraduate(education);
         const provinceSource = PROVINCE_SOURCES[year];
         if (!provinceSource) return result('review', `${year}年度户籍 / 生源政策尚未纳入，请核对当年度简章`);
-        // 定向应届职位的江苏生源要求优先于一般应届本科豁免。
+        let localResult = null;
+        if (year === 2027 && LOCAL_CITIES_2027.has(job.c) && !postgraduate) {
+            const required = { province: '江苏省', city: job.c };
+            const household = matchesPlace(profile.household, required), origin = matchesPlace(profile.origin, required);
+            const qualification = ['master', 'doctor'].includes(education.level) ? '未满足此条研究生学历的相应学位豁免；报考' : '本科及以下学历报考';
+            if (!household && !origin) return result('mismatch', `${qualification}须为${job.c}户籍或生源，当前户籍和生源均未满足`);
+            localResult = result('match', `${qualification}须为${job.c}户籍或生源；已满足本市${household ? '户籍' : '生源'}要求`);
+        }
+        // 定向应届职位的江苏生源要求仍须另行核对。
         if ((code >= 60 && code <= 69) || new RegExp(`面向${year}年普通高校应届毕业生`).test(raw)) {
             if (postgraduate) return result('match', '以该条研究生专业及相应学位报考，适用定向应届职位的生源豁免', provinceSource);
-            if (matchesPlace(profile.origin, { province: '江苏省' })) return result('match', '定向应届职位：已核对江苏生源', provinceSource);
+            if (matchesPlace(profile.origin, { province: '江苏省' })) return localResult ? result('match', `${localResult.reason}；定向应届职位已核对江苏生源`) : result('match', '定向应届职位：已核对江苏生源', provinceSource);
             return result('mismatch', '该定向应届职位须为江苏生源；未填生源不能满足要求', provinceSource);
         }
         if (job.c === '省级' || (year === 2026 && code >= 50 && code <= 59)) return result('match', '一般职位不限户籍、生源；已检查岗位原文的特殊要求', provinceSource);
@@ -151,10 +161,9 @@
         }
         if (!context.city) return result('match', '');
         if (year === 2027) {
-            // 本年度省级公告已明确的豁免仍应执行，且只适用于正在匹配的学历专业。
+            // 按实际匹配的研究生记录判断；普通应届本科不能绕过用户指定的五市限制。
             if (postgraduate) return result('match', '以此研究生专业及相应学位报考，一般职位不限户籍、生源', provinceSource);
-            const hasCurrentGraduate = profile.educations.some(item => ['master', 'doctor'].includes(item.level) && isGraduate(item));
-            if (education.level === 'bachelor' && education.graduate === 'regular' && !hasCurrentGraduate) return result('match', '以2027年普通高校应届本科学历专业报考，一般职位不限生源', provinceSource);
+            return localResult || result('match', `${context.city}岗位未标注地域限制，不限户籍 / 生源`);
         }
         // 地方简章按年度生效，未核对的新年度不能套用旧年度的准入或豁免。
         if (year !== 2026) return result('review', `职位表未列户籍、生源限制；本工具尚未核实${context.city}${year}年简章，地域资格未确认`);

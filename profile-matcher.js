@@ -60,6 +60,23 @@
         if (!simple) return 'review';
         return (/以上/.test(text) ? rank >= minimum : rank === minimum) ? 'match' : 'mismatch';
     }
+    function educationFilterValue(value) {
+        return /^(研究生|硕士研究生|硕士)$/.test(normalize(value)) ? '研究生' : text(value);
+    }
+    function educationFilterGroup(job) {
+        if (/博士/.test(normalize(job.ed))) return '博士研究生';
+        const doctorate = splitOutside(text(job.ot), /[，,；;。\n]/).some(clause => {
+            const value = normalize(clause);
+            if (/^(?:以|按)博士(?:研究生)?(?:学历|学位|专业)/.test(value)) return false;
+            if (/博士.*或.*硕士|硕士.*或.*博士/.test(value)) return false;
+            return /(?:取得|具有|获得|具备|须(?:为|具备|取得)?|要求(?:为|具备)?)(?:相应的?|的)?博士(?:研究生)?(?:学位|学历)/.test(value)
+                || /^博士(?:研究生)?(?:学位|学历)$/.test(value);
+        });
+        return doctorate ? '博士研究生' : educationFilterValue(job.ed);
+    }
+    function matchesEducationFilter(job, selection) {
+        return !selection || educationFilterGroup(job) === educationFilterValue(selection);
+    }
     function splitMajors(text) {
         const parts = [];
         let depth = 0, part = '';
@@ -359,5 +376,5 @@
         const selected = confirmed.length ? confirmed : matches;
         return { status: confirmed.length ? 'match' : matches.length ? 'review' : 'mismatch', matches: selected, reviews: confirmed.length ? [] : [...new Set(selected.flatMap(item => item.reviews))], requirements: selected.flatMap(item => item.requirements) };
     }
-    return Object.freeze({ LEVELS, LABELS, normalizeProfile, forExamYear, educationMatch, majorMatch, matchesMajorSearch, genderLimits, matchesGenderFilter, matchJob });
+    return Object.freeze({ LEVELS, LABELS, normalizeProfile, forExamYear, educationMatch, educationFilterValue, educationFilterGroup, matchesEducationFilter, majorMatch, matchesMajorSearch, genderLimits, matchesGenderFilter, matchJob });
 }));
