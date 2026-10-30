@@ -22,7 +22,7 @@
         }
         * { box-sizing: border-box; }
         body { margin: 0; background: var(--background); color: var(--text); font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
-        button, input, select { font: inherit; }
+        button, input, select, textarea { font: inherit; }
         button, summary, select { cursor: pointer; }
         button, a, input, select, summary { -webkit-tap-highlight-color: transparent; }
         button { touch-action: manipulation; }
@@ -45,6 +45,10 @@
         .total-stats { color: #eeecfa; font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
         .workspace { max-width: 1440px; margin: 0 auto; padding: 28px 32px 40px; display: grid; grid-template-columns: 306px minmax(0, 1fr); gap: 28px; align-items: start; }
         .filters { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; position: sticky; top: 20px; max-height: calc(100dvh - 40px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #b8b5cc transparent; }
+        .filter-panel-summary, .filter-close { display: none; }
+        .filter-panel-label { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-right: auto; }
+        .filter-summary-count { color: var(--accent); background: var(--accent-soft); padding: 2px 7px; border-radius: 5px; font-size: 12px; font-weight: 500; }
+        .filter-toggle-state { color: var(--muted); font-size: 13px; font-weight: 400; }
         .section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
         .section-title h2 { font-size: 18px; }
         .text-button { border: 0; background: transparent; color: var(--accent); padding: 8px 4px; min-height: 44px; }
@@ -55,8 +59,10 @@
         label { font-size: 13px; font-weight: 600; color: #48485e; }
         input, select { width: 100%; min-width: 0; height: 44px; padding: 9px 10px; border: 1px solid #cfcfdd; border-radius: 7px; background: var(--surface); color: var(--text); }
         input::placeholder { color: #767686; font-size: 13px; }
-        input:hover, select:hover { border-color: #a4a0c3; }
-        input:focus, select:focus { border-color: var(--accent); }
+        input:hover, select:hover, textarea:hover { border-color: #a4a0c3; }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+        textarea { width: 100%; min-width: 0; min-height: 92px; padding: 9px 10px; border: 1px solid #cfcfdd; border-radius: 7px; background: var(--surface); color: var(--text); resize: vertical; caret-color: var(--accent); }
+        textarea::placeholder { color: #767686; font-size: 13px; }
         .field-help { color: var(--muted); font-size: 12px; line-height: 1.6; }
         .advanced-filters { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 15px; }
         summary { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; list-style: none; font-size: 14px; font-weight: 600; }
@@ -76,6 +82,25 @@
         .history-actions { display: flex; gap: 8px; margin-top: 8px; }
         .history-actions .btn { min-height: 40px; padding: 5px 12px; }
         .results { min-width: 0; }
+        .profile-section { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 18px; margin-bottom: 20px; }
+        .profile-summary { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 400; }
+        .profile-intro { margin: 8px 0 18px; }
+        .profile-basics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .profile-credentials { margin-bottom: 20px; }
+        .education-row { padding: 12px 0 18px; border-top: 1px solid var(--line); }
+        .education-row-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+        .education-row-title h3 { font-size: 14px; }
+        .education-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        .education-major { grid-column: span 2; }
+        .profile-actions { display: flex; flex-wrap: wrap; gap: 10px; padding: 18px 0 12px; }
+        .profile-controls { display: flex; flex-wrap: wrap; column-gap: 24px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 5px; }
+        .profile-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; cursor: pointer; }
+        .profile-toggle input { width: 17px; height: 17px; margin: 0; }
+        .profile-status { padding-bottom: 8px; }
+        .profile-match { margin-top: 14px; padding-top: 12px; border-top: 1px solid #ecebf2; font-size: 13px; }
+        .profile-match p + p { margin-top: 5px; }
+        .match-label { color: #30674e; font-weight: 600; }
+        .match-label.review { color: #805b13; }
         .results-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
         .view-switch { display: flex; gap: 4px; background: #eae9f2; padding: 4px; border-radius: 8px; }
         .view-button { border: 0; background: transparent; border-radius: 5px; min-height: 40px; padding: 8px 16px; color: var(--muted); font-size: 14px; }
@@ -137,7 +162,12 @@
             h1 { grid-column: 2; grid-row: 1; font-size: 16px; line-height: 1.45; }
             .total-stats { grid-column: 2; grid-row: 2; text-align: left; max-width: none; margin: 0; font-size: 12px; }
             .workspace { display: block; padding: 18px 16px 32px; }
-            .filters { position: static; max-height: none; padding: 18px; margin-bottom: 24px; overflow: visible; }
+            .filters { position: static; max-height: none; padding: 6px 16px; margin-bottom: 12px; overflow: visible; }
+            .filter-panel-summary { display: flex; min-height: 44px; font-size: 15px; gap: 8px; }
+            .filter-panel-body { padding: 8px 0 12px; }
+            .filters .section-title { justify-content: flex-end; margin-bottom: 4px; }
+            .filters .section-title h2 { display: none; }
+            .filter-close { display: block; grid-column: 1 / -1; }
             .filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
             .section-title { margin-bottom: 12px; }
             .advanced-filters { margin-top: 16px; padding-top: 10px; }
@@ -159,8 +189,14 @@
             .page-controls .btn { padding-inline: 4px; }
             .page-status { grid-column: 1 / -1; grid-row: 1; text-align: center; }
             .favorite-label { display: none; }
+            .profile-section { padding-inline: 14px; margin-bottom: 16px; }
+            .education-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .education-major { grid-column: auto; }
+            .education-category { grid-column: 1 / -1; }
+            .profile-controls { column-gap: 16px; }
+            .profile-basics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
-        @media (max-width: 360px) { .workspace { padding-inline: 12px; } .filters { padding: 15px; } .results-toolbar { align-items: stretch; } .sort-group { margin-left: 0; } }
+        @media (max-width: 360px) { .workspace { padding-inline: 12px; } .filters { padding-inline: 12px; } .results-toolbar { align-items: stretch; } .sort-group { margin-left: 0; } }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
     </style>
 </head>
@@ -179,6 +215,9 @@
     </header>
     <div class="workspace">
         <aside class="filters" aria-label="职位筛选条件">
+            <details id="filterPanel">
+                <summary class="filter-panel-summary" id="filterPanelSummary"><span class="filter-panel-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6m8 4v6"/></svg>筛选条件 <span class="filter-summary-count" id="filterSummaryCount" hidden></span></span><span class="filter-toggle-state" id="filterToggleState">展开</span></summary>
+                <div class="filter-panel-body">
             <form id="filterForm">
                 <fieldset id="filterFields" disabled style="border:0;margin:0;padding:0;min-width:0">
                     <legend style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">设置职位筛选条件</legend>
@@ -186,7 +225,7 @@
                     <div class="filter-grid">
                         <div class="filter-group"><label for="cityFilter">城市 / 系统</label><select id="cityFilter"><option value="">全部地区</option></select></div>
                         <div class="filter-group"><label for="educationFilter">学历要求</label><select id="educationFilter"><option value="">全部学历</option></select></div>
-                        <div class="filter-group"><label for="examTypeFilter">考试类别</label><select id="examTypeFilter"><option value="">全部类别</option><option value="A">A 类</option><option value="B">B 类</option><option value="C">C 类</option></select></div>
+                        <div class="filter-group"><label for="examTypeFilter">考试类型</label><select id="examTypeFilter"><option value="">不限</option><option value="A">A 类</option><option value="B">B 类</option><option value="C">C 类</option></select></div>
                         <div class="filter-group"><label for="recruitNumFilter">招考人数</label><select id="recruitNumFilter"><option value="">全部人数</option><option value="1">1 人</option><option value="2">2 人</option><option value="3">3 人及以上</option></select></div>
                         <div class="filter-group"><label for="genderFilter">性别条件</label><select id="genderFilter"><option value="">全部条件</option><option value="male">男性可报</option><option value="female">女性可报</option><option value="no_requirement">无性别要求</option></select></div>
                         <div class="filter-group"><label for="newGraduateFilter">应届条件</label><select id="newGraduateFilter"><option value="">全部条件</option><option value="yes">要求应届</option><option value="no">未要求应届</option></select></div>
@@ -201,12 +240,44 @@
                             <div class="filter-group"><label for="excludeKeywords">排除关键词</label><input type="search" id="excludeKeywords" placeholder="例如：基层工作经历" aria-describedby="excludeHelp"><p class="field-help" id="excludeHelp">任意信息包含其中一个关键词，即排除该职位。</p></div>
                         </div>
                     </details>
-                    <div class="filter-actions"><button type="submit" class="btn btn-primary"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>筛选职位</button><button type="button" class="btn" id="saveSearch">保存条件</button></div>
+                    <div class="filter-actions"><button type="submit" class="btn btn-primary"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>筛选职位</button><button type="button" class="btn" id="saveSearch">保存条件</button><button type="button" class="text-button filter-close" id="closeFilters">收起筛选条件</button></div>
                 </fieldset>
             </form>
             <details class="saved-searches" id="searchHistoryPanel"><summary>已保存的搜索 <span id="historyCount">0</span></summary><div id="searchHistoryList"><p class="field-help">还没有保存的搜索条件。</p></div></details>
+                </div>
+            </details>
         </aside>
         <main class="results" aria-label="职位搜索结果">
+            <section class="profile-section" aria-label="我的报考资料">
+                <details id="profilePanel">
+                    <summary><span>我的报考资料</span><span class="profile-summary" id="profileSummary">设置多条学历与专业</span></summary>
+                    <form id="profileForm">
+                        <p class="field-help profile-intro">每条学历与对应专业一起匹配。未填写的身份、学位、应届资格、证书成果和工作年限，按不具备处理。资料仅保存在当前浏览器。</p>
+                        <div class="profile-basics">
+                            <div class="filter-group"><label for="profileGender">性别（选填）</label><select id="profileGender"><option value="">未填写</option><option value="male">男性</option><option value="female">女性</option></select></div>
+                            <div class="filter-group"><label for="profilePolitics">政治面貌（选填）</label><select id="profilePolitics"><option value="">未填写</option><option value="party">中共党员</option><option value="probationary">中共预备党员</option><option value="league">共青团员</option><option value="masses">群众</option><option value="other">其他</option></select></div>
+                            <div class="filter-group"><label for="profileExamType">考试类型</label><select id="profileExamType"><option value="">不限</option><option value="A">A 类</option><option value="B">B 类</option><option value="C">C 类</option></select></div>
+                            <div class="filter-group"><label for="profileWorkYears">基层工作年限</label><input type="number" id="profileWorkYears" min="0" max="70" step="0.5" inputmode="decimal" placeholder="未填写按 0 年" aria-describedby="workYearsHelp"><p class="field-help" id="workYearsHelp">按认可的基层工作经历填写，单位：年；不等同于服务基层项目身份。</p></div>
+                        </div>
+                        <div class="profile-credentials">
+                            <div class="filter-group"><label for="profileEligibilityKeywords">已具备的特殊身份与限定条件（未填按无）</label><textarea id="profileEligibilityKeywords" rows="3" maxlength="4000" placeholder="服务基层项目人员&#10;服现役满五年的我省户籍（生源）高校毕业生退役军人" aria-describedby="eligibilityHelp"></textarea><p class="field-help" id="eligibilityHelp">一行一项，按实际资格填写完整条件。仅写“退役军人”不能代替服役年限、户籍、生源、安置或特战经历等具体要求。</p></div>
+                        </div>
+                        <div class="profile-credentials">
+                            <div class="filter-group"><label for="profileCredentialKeywords">已具备的证书与成果关键词（选填）</label><textarea id="profileCredentialKeywords" rows="3" maxlength="4000" placeholder="国家法律职业资格证书（A类）&#10;读博以来，第一作者，CSSCI来源期刊论文2篇" aria-describedby="credentialsHelp"></textarea><p class="field-help" id="credentialsHelp">一行一项，也可用逗号分隔。请注明等级、篇数等信息；仅写“论文”不会视为满足 CSSCI、第一作者、篇数等具体要求。</p></div>
+                            <p class="field-help">未填写或未确认具备岗位所需证书、成果条件时，直接排除该岗位。</p>
+                        </div>
+                        <div id="educationRows"></div>
+                        <button type="button" class="btn" id="addEducation">添加一条学历</button>
+                        <p class="field-help" style="margin-top:12px">专业类别可按<a href="https://www.jszzb.gov.cn/tzgg/art/2025/art_20e864d760f69c389220572a110495be.html" target="_blank" rel="noopener noreferrer">专业参考目录</a>选填，多个用逗号分隔。应届身份按每条学历在本次报考中的身份填写。</p>
+                        <div class="profile-actions"><button type="submit" class="btn btn-primary" id="saveProfile" disabled>保存并初筛</button><button type="button" class="btn" id="cancelProfile">取消编辑</button></div>
+                    </form>
+                </details>
+                <div class="profile-controls" id="profileControls" hidden>
+                    <label class="profile-toggle"><input type="checkbox" id="profileEnabled">按我的资料初筛</label>
+                    <label class="profile-toggle"><input type="checkbox" id="includeReview" checked>包含待核对职位</label>
+                </div>
+                <p class="field-help profile-status" id="profileStatus" role="status" hidden></p>
+            </section>
             <div class="results-toolbar">
                 <div class="view-switch" role="group" aria-label="职位范围">
                     <button type="button" class="view-button" id="allJobsView" aria-pressed="true" disabled>全部职位</button>
@@ -225,10 +296,12 @@
                 <div class="page-controls"><button type="button" class="btn" id="firstPage">首页</button><button type="button" class="btn" id="previousPage">上一页</button><span class="page-status" id="pageStatus" aria-live="polite" aria-atomic="true"></span><button type="button" class="btn" id="nextPage">下一页</button><button type="button" class="btn" id="lastPage">末页</button></div>
                 <form class="page-jump" id="pageJumpForm" novalidate><label for="jumpPageNumber">跳至</label><input type="number" id="jumpPageNumber" min="1" step="1" value="1" inputmode="numeric" aria-label="跳转页码" aria-describedby="pageStatus"><span>页</span><button type="submit" class="btn" id="jumpPageButton">跳转</button></form>
             </nav>
-            <footer class="page-footer">收藏与搜索条件保存在当前浏览器。</footer>
+            <footer class="page-footer">报考资料、收藏与搜索条件保存在当前浏览器。</footer>
         </main>
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <datalist id="majorCategories"></datalist>
+    <script src="profile-matcher.js"></script>
     <script>
         'use strict';
         const $ = id => document.getElementById(id);
@@ -244,6 +317,9 @@
         let currentPage = 1, pageSize = 20, favoritesOnly = false, loaded = false;
         let filterTimer, toastTimer;
         let activeConditions = {};
+        const mobileLayout = window.matchMedia('(max-width: 760px)');
+        let applicantProfile = ProfileMatcher.normalizeProfile(null);
+        let profileMatches = new Map();
         const starIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg>';
         const closeIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg>';
         const searchIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>';
@@ -285,6 +361,69 @@
         function matchesAnyKeyword(text, keywords) {
             return !keywords.length || keywords.some(keyword => String(text || '').toLowerCase().includes(keyword));
         }
+        function educationRow(education, index, total) {
+            const prefix = `education-${index}`;
+            const option = (value, label, selected) => `<option value="${value}" ${value === selected ? 'selected' : ''}>${label}</option>`;
+            const levels = Object.entries(ProfileMatcher.LABELS).map(([value, label]) => option(value, label, education.level)).join('');
+            return `<div class="education-row" role="group" aria-labelledby="${prefix}-title">
+                <div class="education-row-title"><h3 id="${prefix}-title">学历 ${index + 1}</h3><button type="button" class="text-button" data-remove-education="${index}" aria-label="删除学历 ${index + 1}" ${total === 1 ? 'disabled' : ''}>删除</button></div>
+                <div class="education-grid">
+                    <div class="filter-group"><label for="${prefix}-level">学历层次</label><select id="${prefix}-level" data-field="level" required><option value="">请选择学历</option>${levels}</select></div>
+                    <div class="filter-group education-major"><label for="${prefix}-major">对应专业</label><input id="${prefix}-major" data-field="major" value="${escapeHtml(education.major || '')}" placeholder="如：法学、计算机科学与技术" required maxlength="160"></div>
+                    <div class="filter-group education-category"><label for="${prefix}-categories">专业类别（选填）</label><input id="${prefix}-categories" data-field="categories" value="${escapeHtml(education.categories || '')}" list="majorCategories" placeholder="如：法律类" maxlength="160"></div>
+                    <div class="filter-group"><label for="${prefix}-degree">该学历的学位</label><select id="${prefix}-degree" data-field="degree">${option('', '未填写', education.degree)}${option('yes', '已取得学位', education.degree)}${option('no', '无相应学位', education.degree)}</select></div>
+                    <div class="filter-group"><label for="${prefix}-graduate">该学历的应届身份</label><select id="${prefix}-graduate" data-field="graduate">${option('', '未填写', education.graduate)}${option('yes', '符合应届条件', education.graduate)}${option('no', '非应届身份', education.graduate)}</select></div>
+                </div></div>`;
+        }
+        function readEducationRows() {
+            return [...$('educationRows').querySelectorAll('.education-row')].map(row => Object.fromEntries([...row.querySelectorAll('[data-field]')].map(input => [input.dataset.field, input.value.trim()])));
+        }
+        function renderEducationRows(educations) {
+            $('educationRows').innerHTML = educations.map((education, index) => educationRow(education, index, educations.length)).join('');
+        }
+        function resetProfileEditor() {
+            $('profileGender').value = applicantProfile.gender;
+            $('profilePolitics').value = applicantProfile.politics;
+            $('profileExamType').value = applicantProfile.examType;
+            $('profileWorkYears').value = applicantProfile.workYears;
+            $('profileCredentialKeywords').value = applicantProfile.credentialKeywords;
+            $('profileEligibilityKeywords').value = applicantProfile.eligibilityKeywords;
+            renderEducationRows(applicantProfile.educations.length ? applicantProfile.educations : [{}]);
+        }
+        function renderProfileControls() {
+            const hasProfile = applicantProfile.educations.length > 0;
+            $('profileSummary').textContent = hasProfile ? `${applicantProfile.educations.length} 条学历 · 点击编辑` : '设置多条学历与专业';
+            $('profileControls').hidden = !hasProfile;
+            $('profileEnabled').checked = applicantProfile.enabled;
+            $('includeReview').checked = applicantProfile.includeReview;
+            $('includeReview').disabled = !applicantProfile.enabled;
+        }
+        function saveApplicantProfile(next) {
+            const profile = ProfileMatcher.normalizeProfile(next);
+            if (!writeStorage('applicantProfile', profile)) { renderProfileControls(); return false; }
+            applicantProfile = profile;
+            profileMatches = new Map();
+            renderProfileControls();
+            return true;
+        }
+        function getProfileMatch(job) {
+            if (!profileMatches.has(job)) profileMatches.set(job, ProfileMatcher.matchJob(job, applicantProfile));
+            return profileMatches.get(job);
+        }
+        function renderProfileStatus() {
+            $('profileStatus').hidden = !applicantProfile.enabled;
+            if (!applicantProfile.enabled) return;
+            const confirmed = filteredJobs.filter(job => getProfileMatch(job).status === 'match').length;
+            $('profileStatus').textContent = `当前结果：资料初筛匹配 ${count(confirmed)} 个，待核对 ${count(filteredJobs.length - confirmed)} 个。未填资格按不具备处理，不放入待核对；已填资料的名称或复合条件仍需核对岗位原文。`;
+        }
+        function profileMatchDescription(job) {
+            if (!applicantProfile.enabled) return '';
+            const result = getProfileMatch(job), review = result.status === 'review';
+            const records = result.matches.map(item => `学历 ${item.index + 1}：${item.level} · ${item.major}`).join('；');
+            const detail = review ? result.reviews.join('；') : [...new Set(result.matches.map(item => item.reason))].join('；');
+            const credentials = [...new Set((result.requirements || []).filter(item => item.status === 'match').map(item => item.label))];
+            return `<div class="profile-match"><p><span class="match-label ${review ? 'review' : ''}">${review ? '待核对' : '资料初筛匹配'}</span> · ${escapeHtml(records)}</p><p class="field-help">${escapeHtml(detail)}</p>${credentials.length ? `<p class="field-help">已填证书与成果：${escapeHtml(credentials.join('；'))}</p>` : ''}</div>`;
+        }
         function applyFilters(resetPage = true) {
             if (!loaded) return;
             clearTimeout(filterTimer);
@@ -294,6 +433,10 @@
             const major = splitSearchKeywords(c.majorSearch), include = splitSearchKeywords(c.includeKeywords), exclude = splitSearchKeywords(c.excludeKeywords);
             const source = favoritesOnly ? favorites : allJobs;
             filteredJobs = source.filter(job => {
+                if (applicantProfile.enabled) {
+                    const match = getProfileMatch(job);
+                    if (match.status === 'mismatch' || (match.status === 'review' && !applicantProfile.includeReview)) return false;
+                }
                 if (c.city && job.c !== c.city) return false;
                 if (c.education && job.ed !== c.education) return false;
                 if (c.examType && job.et !== c.examType) return false;
@@ -315,12 +458,30 @@
                 return true;
             });
             if ($('sortOrder').value === 'recruit') filteredJobs.sort((a, b) => (parseInt(b.rh, 10) || 0) - (parseInt(a.rh, 10) || 0));
+            else if (applicantProfile.enabled) filteredJobs.sort((a, b) => Number(getProfileMatch(a).status === 'review') - Number(getProfileMatch(b).status === 'review'));
             if (resetPage) currentPage = 1;
             writeStorage('lastSearchConditions', c, false);
             renderActiveFilters();
             renderResults();
         }
         function resetFilters() { setConditions({}); applyFilters(); }
+        function syncFilterPanel() {
+            $('filterToggleState').textContent = $('filterPanel').open ? '收起' : '展开';
+            const total = Object.values(activeConditions).filter(Boolean).length;
+            $('filterSummaryCount').hidden = total === 0;
+            $('filterSummaryCount').textContent = `已选 ${total} 项`;
+        }
+        function applyFilterLayout() {
+            const focusInside = $('filterPanel').contains(document.activeElement) && document.activeElement !== $('filterPanelSummary');
+            $('filterPanel').open = !mobileLayout.matches;
+            syncFilterPanel();
+            if (mobileLayout.matches && focusInside) $('filterPanelSummary').focus({ preventScroll: true });
+        }
+        function collapseMobileFilters() {
+            if (!mobileLayout.matches) return;
+            $('filterPanel').open = false;
+            syncFilterPanel();
+        }
         function conditionLabels(conditions) {
             return Object.entries(filterFields).filter(([key]) => conditions[key]).map(([key, [id, label]]) => {
                 const input = $(id);
@@ -330,8 +491,10 @@
         }
         function renderActiveFilters() {
             const labels = conditionLabels(activeConditions);
+            if (applicantProfile.enabled) labels.unshift({ key: '$profile', text: `按我的资料初筛${applicantProfile.examType ? ` · ${applicantProfile.examType} 类` : ''}` });
             $('activeFilters').hidden = !labels.length;
             $('activeFilters').innerHTML = labels.map(({key, text}) => `<button type="button" class="filter-chip" data-remove-filter="${key}" aria-label="移除${escapeHtml(text)}">${escapeHtml(text)}${closeIcon}</button>`).join('');
+            syncFilterPanel();
         }
         function createJobCard(job, favoriteIds) {
             const id = escapeHtml(generateJobId(job)), favorited = favoriteIds.has(generateJobId(job));
@@ -346,6 +509,7 @@
                 <header class="job-header"><div><h3 class="job-title">${escapeHtml(job.pn || '未指定职位名称')}</h3><p class="job-unit">${escapeHtml(job.un || '未指定单位')}</p></div>
                 <button type="button" class="btn favorite-button" data-favorite="${id}" aria-pressed="${favorited}" aria-label="${favorited ? '取消收藏' : '收藏'}：${escapeHtml(job.un)} ${escapeHtml(job.pn)}">${starIcon}<span class="favorite-label">${favorited ? '已收藏' : '收藏'}</span></button></header>
                 <div class="job-tags" aria-label="职位基本条件">${tags}</div>
+                ${profileMatchDescription(job)}
                 <dl class="job-requirements"><dt>专业要求</dt><dd>${escapeHtml(job.mj || '未注明')}</dd><dt>其他要求</dt><dd>${escapeHtml(job.ot || '未注明')}</dd></dl>
                 <details class="job-details"><summary>职位详情与代码</summary><dl class="job-requirements">
                     <dt>职位简介</dt><dd>${escapeHtml(job.pd || '未注明')}</dd>
@@ -382,8 +546,10 @@
                 $('resultsContainer').innerHTML = filteredJobs.slice(start, start + pageSize).map(job => createJobCard(job, favoriteIds)).join('');
             } else {
                 const emptyFavorites = favoritesOnly && !favorites.length;
-                $('resultsContainer').innerHTML = `<div class="empty-state">${emptyFavorites ? starIcon : searchIcon}<h3>${emptyFavorites ? '还没有收藏的职位' : '没有找到符合条件的职位'}</h3><p>${emptyFavorites ? '在职位旁点击收藏，方便下次继续比较。' : '可以移除上方条件，或重置筛选后重新查找。'}</p><button type="button" class="btn" data-empty-action="${emptyFavorites ? 'all' : 'reset'}">${emptyFavorites ? '浏览全部职位' : '重置筛选'}</button></div>`;
+                const action = emptyFavorites ? 'all' : applicantProfile.enabled ? 'profile' : 'reset';
+                $('resultsContainer').innerHTML = `<div class="empty-state">${emptyFavorites ? starIcon : searchIcon}<h3>${emptyFavorites ? '还没有收藏的职位' : '没有找到符合条件的职位'}</h3><p>${emptyFavorites ? '在职位旁点击收藏，方便下次继续比较。' : applicantProfile.enabled ? '请补全实际具备的报考资格，或移除其他筛选条件。未填写的资格不会放入待核对。' : '可以移除上方条件，或重置筛选后重新查找。'}</p><button type="button" class="btn" data-empty-action="${action}">${emptyFavorites ? '浏览全部职位' : applicantProfile.enabled ? '调整报考资料' : '重置筛选'}</button></div>`;
             }
+            renderProfileStatus();
             document.title = `江苏省2026年度公务员职位筛选 · ${favoritesOnly ? '收藏 ' : ''}${count(total)} 个职位`;
         }
         function toggleFavorite(id) {
@@ -445,6 +611,7 @@
         function switchView(onlyFavorites) { favoritesOnly = onlyFavorites; applyFilters(); }
         async function loadData() {
             loaded = false;
+            $('saveProfile').disabled = true;
             $('filterFields').disabled = true;
             ['allJobsView', 'favoritesView', 'sortOrder'].forEach(id => { $(id).disabled = true; });
             $('resultsContainer').setAttribute('aria-busy', 'true');
@@ -461,6 +628,13 @@
                 $('educationFilter').innerHTML = '<option value="">全部学历</option>';
                 cities.forEach(city => $('cityFilter').add(new Option(city, city)));
                 education.forEach(value => $('educationFilter').add(new Option(value, value)));
+                const categories = [...new Set(allJobs.flatMap(job => (job.mj || '').match(/[\u4e00-\u9fff]+类/g) || []))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+                $('majorCategories').innerHTML = categories.map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
+                applicantProfile = ProfileMatcher.normalizeProfile(readStorage('applicantProfile', {}));
+                if (!applicantProfile.educations.length) applicantProfile.enabled = false;
+                profileMatches = new Map();
+                renderProfileControls();
+                resetProfileEditor();
                 $('totalStats').textContent = `${count(allJobs.length)} 个职位 · ${cities.length} 个地区与系统`;
                 const storedFavorites = readStorage('jobFavorites', []), storedHistory = readStorage('searchHistory', []);
                 favorites = Array.isArray(storedFavorites) ? storedFavorites.filter(job => job && typeof job === 'object' && typeof job.pn === 'string' && typeof job.c === 'string') : [];
@@ -468,6 +642,7 @@
                 const last = readStorage('lastSearchConditions', {});
                 setConditions(last && typeof last === 'object' ? last : {});
                 loaded = true;
+                $('saveProfile').disabled = false;
                 $('filterFields').disabled = false;
                 ['allJobsView', 'favoritesView', 'sortOrder'].forEach(id => { $(id).disabled = false; });
                 renderHistory();
@@ -483,7 +658,60 @@
         $('filterForm').addEventListener('submit', event => {
             event.preventDefault();
             applyFilters();
-            if (window.matchMedia('(max-width: 760px)').matches) focusResults();
+            if (mobileLayout.matches) { collapseMobileFilters(); focusResults(); }
+        });
+        $('filterPanel').addEventListener('toggle', syncFilterPanel);
+        mobileLayout.addEventListener('change', applyFilterLayout);
+        $('closeFilters').addEventListener('click', () => {
+            applyFilters();
+            collapseMobileFilters();
+            $('filterPanelSummary').focus({ preventScroll: true });
+            $('filterPanelSummary').scrollIntoView({ behavior: 'instant', block: 'start' });
+        });
+        $('addEducation').addEventListener('click', () => {
+            const educations = readEducationRows();
+            educations.push({});
+            renderEducationRows(educations);
+            $(`education-${educations.length - 1}-level`).focus();
+        });
+        $('educationRows').addEventListener('click', event => {
+            const button = event.target.closest('[data-remove-education]');
+            if (!button) return;
+            const educations = readEducationRows(), index = Number(button.dataset.removeEducation);
+            if (educations.length <= 1) return;
+            educations.splice(index, 1);
+            renderEducationRows(educations);
+            $(`education-${Math.min(index, educations.length - 1)}-level`).focus();
+        });
+        $('profileForm').addEventListener('submit', event => {
+            event.preventDefault();
+            if (!loaded) return;
+            const educations = readEducationRows();
+            const invalid = educations.findIndex(item => !item.level || !item.major);
+            if (invalid >= 0) {
+                const input = $(`education-${invalid}-${educations[invalid].level ? 'major' : 'level'}`);
+                input.setCustomValidity(educations[invalid].level ? '请输入该学历的对应专业。' : '请选择该条记录的学历层次。');
+                input.reportValidity();
+                input.focus();
+                return;
+            }
+            if (!saveApplicantProfile({ ...applicantProfile, enabled: true, gender: $('profileGender').value, politics: $('profilePolitics').value, examType: $('profileExamType').value, workYears: $('profileWorkYears').value, credentialKeywords: $('profileCredentialKeywords').value, eligibilityKeywords: $('profileEligibilityKeywords').value, educations })) return;
+            ['educationFilter', 'majorSearch', 'genderFilter', 'newGraduateFilter', 'examTypeFilter'].forEach(id => { $(id).value = ''; });
+            $('profilePanel').open = false;
+            applyFilters();
+            collapseMobileFilters();
+            focusResults();
+            showToast('报考资料已保存，已按每条学历与对应专业初筛');
+        });
+        $('cancelProfile').addEventListener('click', () => { resetProfileEditor(); $('profilePanel').open = false; });
+        $('profileForm').addEventListener('input', event => {
+            if (event.target.matches('[data-field]')) event.target.setCustomValidity('');
+        });
+        $('profileEnabled').addEventListener('change', () => {
+            if (saveApplicantProfile({ ...applicantProfile, enabled: $('profileEnabled').checked })) applyFilters();
+        });
+        $('includeReview').addEventListener('change', () => {
+            if (saveApplicantProfile({ ...applicantProfile, includeReview: $('includeReview').checked })) applyFilters();
         });
         $('filterForm').addEventListener('change', event => { if (event.target.tagName === 'SELECT') applyFilters(); });
         $('filterForm').addEventListener('input', event => {
@@ -509,10 +737,16 @@
         $('activeFilters').addEventListener('click', event => {
             const button = event.target.closest('[data-remove-filter]');
             if (!button) return;
+            if (button.dataset.removeFilter === '$profile') {
+                if (saveApplicantProfile({ ...applicantProfile, enabled: false })) applyFilters();
+                $('profileEnabled').focus({ preventScroll: true });
+                return;
+            }
             const id = filterFields[button.dataset.removeFilter][0];
             $(id).value = '';
             applyFilters();
-            $(id).focus({ preventScroll: true });
+            if (mobileLayout.matches && !$('filterPanel').open) $('resultsHeading').focus({ preventScroll: true });
+            else $(id).focus({ preventScroll: true });
         });
         $('resultsContainer').addEventListener('click', event => {
             const button = event.target.closest('button');
@@ -522,18 +756,30 @@
             else if (button.hasAttribute('data-retry')) loadData();
             else if (button.dataset.emptyAction === 'all') switchView(false);
             else if (button.dataset.emptyAction === 'reset') resetFilters();
+            else if (button.dataset.emptyAction === 'profile') {
+                $('profilePanel').open = true;
+                $('profilePanel').scrollIntoView({ behavior: 'instant', block: 'start' });
+                $('profileGender').focus({ preventScroll: true });
+            }
         });
         $('searchHistoryList').addEventListener('click', event => {
             const button = event.target.closest('button');
             if (!button) return;
             if (button.hasAttribute('data-load-history')) {
                 const item = history[Number(button.dataset.loadHistory)];
-                if (item && loaded) { setConditions(item); applyFilters(); showToast('已应用保存的搜索条件'); }
+                if (item && loaded) {
+                    setConditions(item);
+                    applyFilters();
+                    if (mobileLayout.matches) { collapseMobileFilters(); focusResults(); }
+                    showToast('已应用保存的搜索条件');
+                }
             } else if (button.hasAttribute('data-delete-history')) {
                 const updated = history.filter((_, index) => index !== Number(button.dataset.deleteHistory));
                 if (writeStorage('searchHistory', updated)) { history = updated; renderHistory(); showToast('已删除搜索条件'); }
             }
         });
+        applyFilterLayout();
+        resetProfileEditor();
         loadData();
     </script>
 </body>
