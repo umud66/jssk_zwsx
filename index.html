@@ -86,6 +86,7 @@
         .profile-summary { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 400; }
         .profile-intro { margin: 8px 0 18px; }
         .profile-basics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .residency-help { margin-bottom: 20px; }
         .profile-credentials { margin-bottom: 20px; }
         .education-row { padding: 12px 0 18px; border-top: 1px solid var(--line); }
         .education-row-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
@@ -258,9 +259,10 @@
                             <div class="filter-group"><label for="profilePolitics">政治面貌（选填）</label><select id="profilePolitics"><option value="">未填写</option><option value="party">中共党员</option><option value="probationary">中共预备党员</option><option value="league">共青团员</option><option value="masses">群众</option><option value="other">其他</option></select></div>
                             <div class="filter-group"><label for="profileExamType">考试类型</label><select id="profileExamType"><option value="">不限</option><option value="A">A 类</option><option value="B">B 类</option><option value="C">C 类</option></select></div>
                             <div class="filter-group"><label for="profileWorkYears">基层工作年限</label><input type="number" id="profileWorkYears" min="0" max="70" step="0.5" inputmode="decimal" placeholder="未填写按 0 年" aria-describedby="workYearsHelp"><p class="field-help" id="workYearsHelp">按认可的基层工作经历填写，单位：年；不等同于服务基层项目身份。</p></div>
-                            <div class="filter-group"><label for="profileHousehold">户籍所在地</label><input id="profileHousehold" maxlength="160" list="residencyLocations" placeholder="如：江苏省无锡市江阴市" aria-describedby="householdHelp"><p class="field-help" id="householdHelp">填写省、市、县区；不等同于目前工作地。</p></div>
-                            <div class="filter-group"><label for="profileOrigin">生源地</label><input id="profileOrigin" maxlength="160" list="residencyLocations" placeholder="如：江苏省南京市江宁区" aria-describedby="originHelp"><p class="field-help" id="originHelp">按高考地或高考时户籍填写，与现户籍分开判断。</p></div>
+                            <div class="filter-group"><label for="profileHousehold">户籍地（市）</label><select id="profileHousehold" aria-describedby="householdHelp"><option value="">未填写</option></select><p class="field-help" id="householdHelp">选择江苏省内城市或外省户籍；不等同于工作地。</p></div>
+                            <div class="filter-group"><label for="profileOrigin">生源地（市）</label><select id="profileOrigin" aria-describedby="originHelp"><option value="">未填写</option></select><p class="field-help" id="originHelp">选择高考地或高考时户籍所在市；省外选“外省生源”。</p></div>
                         </div>
+                        <p class="field-help residency-help">户籍与生源分别判断。岗位明确限县区时，仅选城市不会视为满足该县区条件；已有的县区资料仍保留。</p>
                         <div class="profile-credentials">
                             <div class="filter-group"><label for="profileEligibilityKeywords">已具备的特殊身份与限定条件（未填按无）</label><textarea id="profileEligibilityKeywords" rows="3" maxlength="4000" placeholder="服务基层项目人员&#10;服现役满五年的我省户籍（生源）高校毕业生退役军人" aria-describedby="eligibilityHelp"></textarea><p class="field-help" id="eligibilityHelp">一行一项，按实际资格填写完整条件。仅写“退役军人”不能代替服役年限、户籍、生源、安置或特战经历等具体要求。</p></div>
                         </div>
@@ -303,7 +305,6 @@
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
     <datalist id="majorCategories"></datalist>
-    <datalist id="residencyLocations"></datalist>
     <script src="residency-rules.js"></script>
     <script src="profile-matcher.js"></script>
     <script>
@@ -385,12 +386,20 @@
         function renderEducationRows(educations) {
             $('educationRows').innerHTML = educations.map((education, index) => educationRow(education, index, educations.length)).join('');
         }
+        function renderResidencySelect(id, saved) {
+            const select = $(id), outsideLabel = id === 'profileHousehold' ? '外省户籍' : '外省生源';
+            select.replaceChildren(new Option('未填写', ''));
+            ResidencyRules.suggestions().forEach(value => select.add(new Option(value === '外省' ? outsideLabel : ResidencyRules.parsePlace(value).city, value)));
+            // 原资料可能具体到县区，不能在切换为市级选择后悄悄丢失。
+            if (saved && ![...select.options].some(option => option.value === saved)) select.add(new Option(`${saved}（已保存）`, saved));
+            select.value = saved || '';
+        }
         function resetProfileEditor() {
             $('profileGender').value = applicantProfile.gender;
             $('profilePolitics').value = applicantProfile.politics;
             $('profileExamType').value = applicantProfile.examType;
-            $('profileHousehold').value = applicantProfile.household;
-            $('profileOrigin').value = applicantProfile.origin;
+            renderResidencySelect('profileHousehold', applicantProfile.household);
+            renderResidencySelect('profileOrigin', applicantProfile.origin);
             $('profileWorkYears').value = applicantProfile.workYears;
             $('profileCredentialKeywords').value = applicantProfile.credentialKeywords;
             $('profileEligibilityKeywords').value = applicantProfile.eligibilityKeywords;
@@ -638,7 +647,6 @@
                 education.forEach(value => $('educationFilter').add(new Option(value, value)));
                 const categories = [...new Set(allJobs.flatMap(job => (job.mj || '').match(/[\u4e00-\u9fff]+类/g) || []))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
                 $('majorCategories').innerHTML = categories.map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
-                $('residencyLocations').innerHTML = ResidencyRules.suggestions().map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
                 applicantProfile = ProfileMatcher.normalizeProfile(readStorage('applicantProfile', {}));
                 if (!applicantProfile.educations.length) applicantProfile.enabled = false;
                 profileMatches = new Map();

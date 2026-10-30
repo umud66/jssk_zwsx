@@ -154,6 +154,6 @@
         if (matchesPlace(profile.household, required)) return result('match', `按该条学历专业报考，已核对${policy.socialArea}户籍`, policy.source);
         return result('mismatch', `此报考学历专业路径要求${policy.socialArea}户籍，未满足；不能借用其他学历的地域豁免`, policy.source);
     }
-    const suggestions = () => Object.entries(AREAS).flatMap(([city, districts]) => [`江苏省${city}`, ...districts.map(district => `江苏省${city}${district}`)]);
+    const suggestions = () => ['外省', ...Object.keys(AREAS).map(city => `江苏省${city}`)];
     return Object.freeze({ match, parsePlace, matchesPlace, isLocationClause, suggestions, policies: POLICIES });
 }));
