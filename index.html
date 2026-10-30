@@ -258,6 +258,8 @@
                             <div class="filter-group"><label for="profilePolitics">政治面貌（选填）</label><select id="profilePolitics"><option value="">未填写</option><option value="party">中共党员</option><option value="probationary">中共预备党员</option><option value="league">共青团员</option><option value="masses">群众</option><option value="other">其他</option></select></div>
                             <div class="filter-group"><label for="profileExamType">考试类型</label><select id="profileExamType"><option value="">不限</option><option value="A">A 类</option><option value="B">B 类</option><option value="C">C 类</option></select></div>
                             <div class="filter-group"><label for="profileWorkYears">基层工作年限</label><input type="number" id="profileWorkYears" min="0" max="70" step="0.5" inputmode="decimal" placeholder="未填写按 0 年" aria-describedby="workYearsHelp"><p class="field-help" id="workYearsHelp">按认可的基层工作经历填写，单位：年；不等同于服务基层项目身份。</p></div>
+                            <div class="filter-group"><label for="profileHousehold">户籍所在地</label><input id="profileHousehold" maxlength="160" list="residencyLocations" placeholder="如：江苏省无锡市江阴市" aria-describedby="householdHelp"><p class="field-help" id="householdHelp">填写省、市、县区；不等同于目前工作地。</p></div>
+                            <div class="filter-group"><label for="profileOrigin">生源地</label><input id="profileOrigin" maxlength="160" list="residencyLocations" placeholder="如：江苏省南京市江宁区" aria-describedby="originHelp"><p class="field-help" id="originHelp">按高考地或高考时户籍填写，与现户籍分开判断。</p></div>
                         </div>
                         <div class="profile-credentials">
                             <div class="filter-group"><label for="profileEligibilityKeywords">已具备的特殊身份与限定条件（未填按无）</label><textarea id="profileEligibilityKeywords" rows="3" maxlength="4000" placeholder="服务基层项目人员&#10;服现役满五年的我省户籍（生源）高校毕业生退役军人" aria-describedby="eligibilityHelp"></textarea><p class="field-help" id="eligibilityHelp">一行一项，按实际资格填写完整条件。仅写“退役军人”不能代替服役年限、户籍、生源、安置或特战经历等具体要求。</p></div>
@@ -268,7 +270,7 @@
                         </div>
                         <div id="educationRows"></div>
                         <button type="button" class="btn" id="addEducation">添加一条学历</button>
-                        <p class="field-help" style="margin-top:12px">专业类别可按<a href="https://www.jszzb.gov.cn/tzgg/art/2025/art_20e864d760f69c389220572a110495be.html" target="_blank" rel="noopener noreferrer">专业参考目录</a>选填，多个用逗号分隔。应届身份按每条学历在本次报考中的身份填写。</p>
+                        <p class="field-help" style="margin-top:12px">专业类别可按<a href="https://www.jszzb.gov.cn/tzgg/art/2025/art_20e864d760f69c389220572a110495be.html" target="_blank" rel="noopener noreferrer">专业参考目录</a>选填，多个用逗号分隔。应届身份按每条学历填写；普通高校应届请选对应项，未区分时不自动授予该类地域豁免。</p>
                         <div class="profile-actions"><button type="submit" class="btn btn-primary" id="saveProfile" disabled>保存并初筛</button><button type="button" class="btn" id="cancelProfile">取消编辑</button></div>
                     </form>
                 </details>
@@ -301,6 +303,8 @@
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
     <datalist id="majorCategories"></datalist>
+    <datalist id="residencyLocations"></datalist>
+    <script src="residency-rules.js"></script>
     <script src="profile-matcher.js"></script>
     <script>
         'use strict';
@@ -372,7 +376,7 @@
                     <div class="filter-group education-major"><label for="${prefix}-major">对应专业</label><input id="${prefix}-major" data-field="major" value="${escapeHtml(education.major || '')}" placeholder="如：法学、计算机科学与技术" required maxlength="160"></div>
                     <div class="filter-group education-category"><label for="${prefix}-categories">专业类别（选填）</label><input id="${prefix}-categories" data-field="categories" value="${escapeHtml(education.categories || '')}" list="majorCategories" placeholder="如：法律类" maxlength="160"></div>
                     <div class="filter-group"><label for="${prefix}-degree">该学历的学位</label><select id="${prefix}-degree" data-field="degree">${option('', '未填写', education.degree)}${option('yes', '已取得学位', education.degree)}${option('no', '无相应学位', education.degree)}</select></div>
-                    <div class="filter-group"><label for="${prefix}-graduate">该学历的应届身份</label><select id="${prefix}-graduate" data-field="graduate">${option('', '未填写', education.graduate)}${option('yes', '符合应届条件', education.graduate)}${option('no', '非应届身份', education.graduate)}</select></div>
+                    <div class="filter-group"><label for="${prefix}-graduate">该学历的应届身份</label><select id="${prefix}-graduate" data-field="graduate">${option('', '未填写', education.graduate)}${option('regular', '普通高校应届', education.graduate)}${option('yes', '应届未区分', education.graduate)}${option('no', '非应届身份', education.graduate)}</select></div>
                 </div></div>`;
         }
         function readEducationRows() {
@@ -385,6 +389,8 @@
             $('profileGender').value = applicantProfile.gender;
             $('profilePolitics').value = applicantProfile.politics;
             $('profileExamType').value = applicantProfile.examType;
+            $('profileHousehold').value = applicantProfile.household;
+            $('profileOrigin').value = applicantProfile.origin;
             $('profileWorkYears').value = applicantProfile.workYears;
             $('profileCredentialKeywords').value = applicantProfile.credentialKeywords;
             $('profileEligibilityKeywords').value = applicantProfile.eligibilityKeywords;
@@ -414,7 +420,7 @@
             $('profileStatus').hidden = !applicantProfile.enabled;
             if (!applicantProfile.enabled) return;
             const confirmed = filteredJobs.filter(job => getProfileMatch(job).status === 'match').length;
-            $('profileStatus').textContent = `当前结果：资料初筛匹配 ${count(confirmed)} 个，待核对 ${count(filteredJobs.length - confirmed)} 个。未填资格按不具备处理，不放入待核对；已填资料的名称或复合条件仍需核对岗位原文。`;
+            $('profileStatus').textContent = `当前结果：资料初筛匹配 ${count(confirmed)} 个，待核对 ${count(filteredJobs.length - confirmed)} 个。未填的必备资格按不具备处理；已填资料的名称、复合条件或尚未纳入的地区政策仍需核对。`;
         }
         function profileMatchDescription(job) {
             if (!applicantProfile.enabled) return '';
@@ -422,7 +428,9 @@
             const records = result.matches.map(item => `学历 ${item.index + 1}：${item.level} · ${item.major}`).join('；');
             const detail = review ? result.reviews.join('；') : [...new Set(result.matches.map(item => item.reason))].join('；');
             const credentials = [...new Set((result.requirements || []).filter(item => item.status === 'match').map(item => item.label))];
-            return `<div class="profile-match"><p><span class="match-label ${review ? 'review' : ''}">${review ? '待核对' : '资料初筛匹配'}</span> · ${escapeHtml(records)}</p><p class="field-help">${escapeHtml(detail)}</p>${credentials.length ? `<p class="field-help">已填证书与成果：${escapeHtml(credentials.join('；'))}</p>` : ''}</div>`;
+            const residence = [...new Map(result.matches.filter(item => item.residency?.reason).map(item => [item.residency.reason, item])).values()];
+            const residenceText = residence.map(item => `<p class="field-help">学历 ${item.index + 1} · 户籍 / 生源：${escapeHtml(item.residency.reason)}${item.residency.source ? ` <a href="${escapeHtml(item.residency.source)}" target="_blank" rel="noopener noreferrer">政策依据</a>` : ''}</p>`).join('');
+            return `<div class="profile-match"><p><span class="match-label ${review ? 'review' : ''}">${review ? '待核对' : '资料初筛匹配'}</span> · ${escapeHtml(records)}</p><p class="field-help">${escapeHtml(detail)}</p>${residenceText}${credentials.length ? `<p class="field-help">已填证书与成果：${escapeHtml(credentials.join('；'))}</p>` : ''}</div>`;
         }
         function applyFilters(resetPage = true) {
             if (!loaded) return;
@@ -630,6 +638,7 @@
                 education.forEach(value => $('educationFilter').add(new Option(value, value)));
                 const categories = [...new Set(allJobs.flatMap(job => (job.mj || '').match(/[\u4e00-\u9fff]+类/g) || []))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
                 $('majorCategories').innerHTML = categories.map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
+                $('residencyLocations').innerHTML = ResidencyRules.suggestions().map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
                 applicantProfile = ProfileMatcher.normalizeProfile(readStorage('applicantProfile', {}));
                 if (!applicantProfile.educations.length) applicantProfile.enabled = false;
                 profileMatches = new Map();
@@ -695,7 +704,7 @@
                 input.focus();
                 return;
             }
-            if (!saveApplicantProfile({ ...applicantProfile, enabled: true, gender: $('profileGender').value, politics: $('profilePolitics').value, examType: $('profileExamType').value, workYears: $('profileWorkYears').value, credentialKeywords: $('profileCredentialKeywords').value, eligibilityKeywords: $('profileEligibilityKeywords').value, educations })) return;
+            if (!saveApplicantProfile({ ...applicantProfile, enabled: true, gender: $('profileGender').value, politics: $('profilePolitics').value, examType: $('profileExamType').value, household: $('profileHousehold').value, origin: $('profileOrigin').value, workYears: $('profileWorkYears').value, credentialKeywords: $('profileCredentialKeywords').value, eligibilityKeywords: $('profileEligibilityKeywords').value, educations })) return;
             ['educationFilter', 'majorSearch', 'genderFilter', 'newGraduateFilter', 'examTypeFilter'].forEach(id => { $(id).value = ''; });
             $('profilePanel').open = false;
             applyFilters();

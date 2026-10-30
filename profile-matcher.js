@@ -1,8 +1,8 @@
 (function (root, factory) {
-    const api = factory();
+    const api = factory(typeof module === 'object' && module.exports ? require('./residency-rules.js') : root.ResidencyRules);
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.ProfileMatcher = api;
-}(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (residencyRules) {
     'use strict';
     const LEVELS = Object.freeze({ highschool: 1, college: 2, bachelor: 3, master: 4, doctor: 5 });
     const LABELS = Object.freeze({ highschool: '高中 / 中专', college: '大专', bachelor: '本科', master: '硕士研究生', doctor: '博士研究生' });
@@ -21,13 +21,15 @@
             gender: allowed(source.gender, ['male', 'female']),
             politics: allowed(source.politics, ['party', 'probationary', 'league', 'masses', 'other']),
             examType: allowed(source.examType, ['A', 'B', 'C']),
+            household: clean(source.household),
+            origin: clean(source.origin),
             workYears: years !== '' && Number.isFinite(Number(years)) && Number(years) >= 0 && Number(years) <= 70 ? String(Number(years)) : '',
             credentialKeywords: text(source.credentialKeywords).slice(0, 4000),
             eligibilityKeywords: text(source.eligibilityKeywords).slice(0, 4000),
             strictCredentials: true,
             educations: Array.isArray(source.educations) ? source.educations.filter(item => item && LEVELS[item.level] && clean(item.major)).map(item => ({
                 level: item.level, major: clean(item.major), categories: clean(item.categories),
-                degree: allowed(item.degree, ['yes', 'no']), graduate: allowed(item.graduate, ['yes', 'no'])
+                degree: allowed(item.degree, ['yes', 'no']), graduate: allowed(item.graduate, ['yes', 'no', 'regular'])
             })) : []
         };
     }
@@ -78,8 +80,6 @@
     function globalConditions(job, profile) {
         const requirement = text(job.ot), reviews = [];
         if (profile.examType && text(job.et).replace(/\s|类/g, '').toUpperCase() !== profile.examType) return { status: 'mismatch', reviews: ['考试类型不匹配'] };
-        const eligibility = eligibilityConditions(job, profile);
-        if (eligibility.status === 'mismatch') return eligibility;
         const strict = requirement.replace(/(?:适合|适宜|建议)[男女]性/g, '');
         const male = strict.includes('男性'), female = strict.includes('女性');
         if (male !== female) {
@@ -117,12 +117,14 @@
             .replace(/户籍\(生源\)|户籍、生源/g, '户籍或生源')
             .replace(/本县|本区/g, text(job.rn || job.c)).replace(/[，,；;。]/g, '');
     }
-    function eligibilityConditions(job, profile) {
+    function eligibilityConditions(job, profile, education) {
         const entries = splitOutside(profile.eligibilityKeywords, /[；;\n]/).filter(value => !/不是|没有|未参加|未服务|不具备|^无/.test(value)).map(value => normalizeEligibility(value, {}));
         const groups = [];
         let block = [];
         const flush = () => { if (block.length) groups.push(block.join('，')); block = []; };
         for (const clause of splitOutside(text(job.ot), /[，,；;。\n]/)) {
+            // 纯地域条件在每条学历内判断，不能在这里先否决整个岗位。
+            if (residencyRules.isLocationClause(clause)) { flush(); continue; }
             // 这些完整的并列身份是 OR，不能把其中的退役条件应用给基层项目人员。
             const common = /服务基层项目人员|(?:服现役|服役)满(?:五|5)年的?[^、，；;。]*?高校毕业生退役军人|符合相关条件并在我省安排工作的退役军士和义务兵/g;
             const branches = clause.match(common) || [];
@@ -138,6 +140,11 @@
         }
         flush();
         const has = required => {
+            // 退役分支内的本省户籍/生源不能因别的并列身份或一般研究生豁免而丢失。
+            if (/退役/.test(required) && /户籍|生源/.test(required)) {
+                const location = ['yes', 'regular'].includes(education.graduate) ? profile.origin : profile.household;
+                if (!residencyRules.matchesPlace(location, { province: '江苏省' })) return false;
+            }
             const target = normalizeEligibility(required, job);
             const variants = target.includes('户籍或生源') ? [target, target.replace('户籍或生源', '户籍'), target.replace('户籍或生源', '生源')] : [target];
             return entries.some(entry => variants.some(value => value && entry.includes(value)));
@@ -270,6 +277,8 @@
             if (level === 'mismatch') return;
             const major = majorMatch(job.mj, education);
             if (major.status === 'mismatch') return;
+            const eligibility = eligibilityConditions(job, profile, education);
+            if (eligibility.status === 'mismatch') return;
             const reviews = [...global.reviews];
             if (level === 'review') reviews.push('学历表述需核对');
             if (major.status === 'review') reviews.push(major.reason);
@@ -277,6 +286,9 @@
             const degree = degreeConditions(other, education, profile);
             if (degree.status === 'mismatch') return;
             reviews.push(...degree.reviews);
+            const residency = residencyRules.match(job, education, profile);
+            if (residency.status === 'mismatch') return;
+            if (residency.status === 'review') reviews.push(residency.reason);
             const credentials = credentialConditions(other, education, profile);
             if (credentials.status === 'mismatch') return;
             reviews.push(...credentials.reviews);
@@ -284,15 +296,15 @@
             if (/应届毕业生/.test(graduateText)) {
                 if (/不限.{0,8}应届|应届.{0,8}不限/.test(graduateText)) { /* 岗位明确不限应届身份。 */ }
                 else if (/应届.{0,15}或|或.{0,15}应届/.test(graduateText)) {
-                    if (education.graduate !== 'yes') return;
+                    if (!['yes', 'regular'].includes(education.graduate)) return;
                     reviews.push('应届条件含并列或特殊表述，请核对原文');
                 }
                 else {
                     const requiresGraduate = !/非应届毕业生|不含应届毕业生/.test(graduateText);
-                    if ((education.graduate === 'yes') !== requiresGraduate) return;
+                    if (['yes', 'regular'].includes(education.graduate) !== requiresGraduate) return;
                 }
             }
-            matches.push({ index, level: LABELS[education.level], major: education.major, status: reviews.length ? 'review' : 'match', reason: major.reason, reviews: [...new Set(reviews)], requirements: credentials.requirements });
+            matches.push({ index, level: LABELS[education.level], major: education.major, status: reviews.length ? 'review' : 'match', reason: major.reason, reviews: [...new Set(reviews)], requirements: credentials.requirements, residency });
         });
         const confirmed = matches.filter(item => item.status === 'match');
         const selected = confirmed.length ? confirmed : matches;
